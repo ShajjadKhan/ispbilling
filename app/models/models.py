@@ -1,20 +1,27 @@
-from datetime import datetime
+"""
+Database models for CyberNet ISP Billing System (Standalone).
+Manages Customers, Subscribers (PPPoE/Hotspot), Devices (TV/Mobile),
+Invoices, Payments, Vacation Holds, Routers, and Audit Logs.
+"""
+from datetime import date, datetime
 from sqlalchemy import (
-    Column, Integer, String, Float, Boolean, DateTime, Date, ForeignKey, Text
+    Column, Integer, String, Float, Boolean,
+    DateTime, Date, ForeignKey, Text
 )
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 
+
 class User(Base):
-    """Staff, Admin, and Collector user accounts."""
+    """System administrators and staff members."""
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(64), unique=True, index=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
+    password_hash = Column(String(128), nullable=False)
     fullname = Column(String(128), nullable=False)
-    role = Column(String(32), default="admin")  # master, admin, collector, tech
+    role = Column(String(32), default="admin")  # master, admin, accountant, technician
     phone = Column(String(32), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -106,6 +113,7 @@ class Subscriber(Base):
     payments = relationship("Payment", back_populates="subscriber", cascade="all, delete-orphan")
     vacation_holds = relationship("VacationHold", back_populates="subscriber", cascade="all, delete-orphan")
     devices = relationship("SubscriberDevice", back_populates="subscriber", cascade="all, delete-orphan")
+    hotspot_requests = relationship("HotspotRequest", back_populates="subscriber")
 
 
 class SubscriberDevice(Base):
@@ -127,6 +135,26 @@ class SubscriberDevice(Base):
 
     # Relationships
     subscriber = relationship("Subscriber", back_populates="devices")
+
+
+class HotspotRequest(Base):
+    """Real-time customer connection requests submitted from MikroTik Hotspot captive portal popup."""
+    __tablename__ = "hotspot_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    phone = Column(String(32), index=True, nullable=False)
+    mac_address = Column(String(32), index=True, nullable=False)
+    ip_address = Column(String(45), nullable=True)
+    device_model = Column(String(100), nullable=True)
+    # status: pending, approved, rejected, expired, device_limit
+    status = Column(String(32), default="pending", index=True)
+    subscriber_id = Column(Integer, ForeignKey("subscribers.id"), nullable=True)
+    admin_notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    subscriber = relationship("Subscriber", back_populates="hotspot_requests")
 
 
 class Invoice(Base):

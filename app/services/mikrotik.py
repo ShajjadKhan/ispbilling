@@ -273,12 +273,21 @@ class MikrotikService:
         comment: str = ""
     ) -> Dict[str, Any]:
         """
-        Adds a MAC/IP binding on MikroTik Hotspot.
+        Adds or updates a MAC/IP binding on MikroTik Hotspot idempotently.
         binding_type: 'bypassed' (gives instant internet without login) or 'blocked'.
         """
         api = self._get_api()
         resource = api.get_resource("/ip/hotspot/ip-binding")
         clean_mac = mac_address.upper().replace("-", ":").strip()
+        for b in resource.get():
+            if b.get("mac-address", "").upper() == clean_mac:
+                update_params = {"type": binding_type}
+                if comment:
+                    update_params["comment"] = comment
+                if address:
+                    update_params["address"] = address
+                resource.set(id=b["id"], **update_params)
+                return {"id": b["id"], "updated": True}
         params = {
             "mac-address": clean_mac,
             "type": binding_type,

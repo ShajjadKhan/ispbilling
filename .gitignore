@@ -24,3 +24,5 @@ nohup.out
 Thumbs.db
 .vscode/
 .idea/
+*.db-shm
+*.db-wal

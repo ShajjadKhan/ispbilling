@@ -85,6 +85,7 @@
       text-align: left;
       cursor: pointer;
       transition: all 0.15s;
+      text-decoration: none;
     }
     .sidebar-link:hover { background-color: rgba(255, 255, 255, 0.04); color: #f8fafc; }
     .sidebar-link.active {
@@ -98,55 +99,62 @@
       font-size: 11px;
       padding: 2px 7px;
       border-radius: 10px;
-      font-weight: 700;
     }
-    .app-topbar {
-      height: 62px;
+    .top-navbar {
+      height: 64px;
       background-color: var(--bg-dark-800);
       border-bottom: 1px solid var(--border-color);
+      padding: 0 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 24px;
       position: sticky;
       top: 0;
       z-index: 1020;
     }
-    .metric-card {
+    .stat-card {
       background: var(--bg-dark-800);
       border: 1px solid var(--border-color);
       border-radius: 12px;
-      padding: 18px;
-      transition: all 0.15s;
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
     }
-    .metric-card:hover {
-      border-color: var(--border-light);
-      transform: translateY(-2px);
+    .stat-card .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-bottom: 12px;
     }
-    .metric-title {
-      font-size: 11.5px;
+    .stat-card .stat-val {
+      font-size: 24px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #94a3b8;
+      letter-spacing: -0.02em;
+      color: #fff;
     }
-    .metric-val {
-      font-size: 26px;
-      font-weight: 800;
-      margin: 6px 0 2px;
+    .stat-card .stat-lbl {
+      color: #94a3b8;
+      font-size: 12.5px;
+      font-weight: 500;
     }
     .panel-card {
-      background-color: var(--bg-dark-800);
+      background: var(--bg-dark-800);
       border: 1px solid var(--border-color);
       border-radius: 12px;
       overflow: hidden;
+      margin-bottom: 24px;
     }
     .panel-header {
-      padding: 14px 18px;
+      padding: 14px 20px;
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      background: rgba(255, 255, 255, 0.01);
     }
     .custom-table {
       width: 100%;
@@ -179,6 +187,14 @@
       box-shadow: 0 0 8px var(--color-success);
       display: inline-block;
     }
+    .pulse-warning {
+      animation: pulse-warn 1.5s infinite;
+    }
+    @keyframes pulse-warn {
+      0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
     .font-mono { font-family: var(--font-mono); }
   </style>
 </head>
@@ -198,199 +214,388 @@
 
       <div class="p-3 flex-grow-1 overflow-y-auto">
         <div class="text-secondary small fw-bold text-uppercase px-2 mb-2" style="font-size: 10.5px;">Navigation</div>
+        
         <button class="sidebar-link active" onclick="switchSection('dashboard')">
           <i class="fas fa-chart-pie"></i>
           <span>Dashboard</span>
         </button>
-        <button class="sidebar-link" onclick="switchSection('pppoe')">
-          <i class="fas fa-ethernet"></i>
-          <span>PPPoE Users</span>
-          <span class="sidebar-badge bg-primary bg-opacity-25 text-primary">{{ pppoe_subs|length }}</span>
+
+        <!-- HOTSPOT REQUESTS (LIVE POPUPS) -->
+        <button class="sidebar-link" onclick="switchSection('hotspot-requests')">
+          <i class="fas fa-mobile-screen-button"></i>
+          <span>Hotspot Requests</span>
+          {% if pending_hotspot_requests|length > 0 %}
+          <span class="sidebar-badge bg-danger text-white pulse-warning">{{ pending_hotspot_requests|length }} New</span>
+          {% else %}
+          <span class="sidebar-badge bg-secondary">{{ recent_hotspot_requests|length }}</span>
+          {% endif %}
         </button>
+
         <button class="sidebar-link" onclick="switchSection('hotspot')">
           <i class="fas fa-wifi"></i>
           <span>Hotspot Users</span>
-          <span class="sidebar-badge bg-success bg-opacity-25 text-success">{{ hotspot_subs|length }}</span>
+          <span class="sidebar-badge bg-success bg-opacity-25 text-success">{{ hotspot_subscribers }}</span>
         </button>
+
+        <button class="sidebar-link" onclick="switchSection('pppoe')">
+          <i class="fas fa-ethernet"></i>
+          <span>PPPoE Users</span>
+          <span class="sidebar-badge bg-primary bg-opacity-25 text-primary">{{ pppoe_subscribers }}</span>
+        </button>
+
         <button class="sidebar-link" onclick="switchSection('devices')">
           <i class="fas fa-tv"></i>
           <span>Android TV / MACs</span>
           <span class="sidebar-badge bg-warning bg-opacity-25 text-warning">{{ devices|length }}</span>
         </button>
+
         <button class="sidebar-link" onclick="switchSection('collections')">
           <i class="fas fa-hand-holding-usd"></i>
           <span>Collections</span>
           <span class="sidebar-badge bg-info bg-opacity-25 text-info">{{ payments|length }}</span>
         </button>
+
         <button class="sidebar-link" onclick="switchSection('packages')">
           <i class="fas fa-boxes-stacked"></i>
           <span>Packages</span>
           <span class="sidebar-badge bg-secondary">{{ packages|length }}</span>
         </button>
+
         <button class="sidebar-link" onclick="switchSection('mikrotik')">
           <i class="fas fa-server"></i>
           <span>Router Hardware</span>
+          <span class="sidebar-badge bg-success"><span class="pulse-dot me-1"></span>{{ router_ping }}</span>
         </button>
       </div>
 
-      <!-- Real Router Socket Status -->
-      <div class="p-3 border-top border-secondary border-opacity-25 bg-dark bg-opacity-25">
-        <div class="d-flex align-items-center gap-2">
-          <span class="pulse-dot"></span>
-          <div class="small lh-sm">
-            <div class="fw-bold text-white font-mono">{{ router_host }}:{{ router_port }}</div>
-            <div class="text-success small">Ping: {{ router_ping }}</div>
-          </div>
-        </div>
+      <!-- Quick Actions in Sidebar -->
+      <div class="p-3 border-top border-secondary border-opacity-25">
+        <button class="btn btn-warning btn-sm w-100 mb-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#bypassTvModal">
+          <i class="fas fa-tv me-1"></i> Bypass Android TV
+        </button>
+        <button class="btn btn-primary btn-sm w-100 fw-semibold" data-bs-toggle="modal" data-bs-target="#newSubscriberModal">
+          <i class="fas fa-user-plus me-1"></i> Add Subscriber
+        </button>
       </div>
     </aside>
 
-    <!-- CONTENT -->
+    <!-- MAIN CONTENT AREA -->
     <div class="app-content flex-grow-1">
-
-      <!-- TOPBAR -->
-      <header class="app-topbar">
+      
+      <!-- TOP NAVBAR -->
+      <header class="top-navbar">
         <div class="d-flex align-items-center gap-3">
-          <button class="btn btn-outline-secondary btn-sm d-lg-none" onclick="document.getElementById('appSidebar').classList.toggle('show')">
+          <button class="btn btn-sm btn-outline-secondary d-lg-none" onclick="toggleSidebar()">
             <i class="fas fa-bars"></i>
           </button>
-          <span class="text-secondary small fw-semibold">
-            <i class="fas fa-database me-1 text-primary"></i> Standalone Database: <code>cybernet.db</code>
-          </span>
+          <span class="fw-bold text-white fs-5" id="pageTitle">ISP Operations Center</span>
+          <span class="badge bg-dark border border-secondary text-secondary font-mono small d-none d-md-inline-block">cybernet.db</span>
         </div>
 
-        <div class="d-flex align-items-center gap-2">
-          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newSubscriberModal">
-            <i class="fas fa-plus me-1"></i> Add Subscriber
-          </button>
-          <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#bypassTvModal">
-            <i class="fas fa-tv me-1"></i> Bypass TV (MAC)
-          </button>
+        <div class="d-flex align-items-center gap-3">
+          <!-- Real Router Socket Status -->
+          <div class="d-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-dark border border-secondary border-opacity-50 small">
+            <span class="pulse-dot"></span>
+            <span class="text-secondary">MikroTik Router:</span>
+            <span class="font-mono text-white fw-bold">{{ router_host }}:{{ router_port }}</span>
+            <span class="badge bg-success bg-opacity-25 text-success font-mono">{{ router_ping }}</span>
+          </div>
+
+          <a href="/hotspot/login" target="_blank" class="btn btn-outline-info btn-sm">
+            <i class="fas fa-arrow-up-right-from-square me-1"></i> Preview Hotspot
+          </a>
         </div>
       </header>
 
+      <!-- MAIN CONTAINER -->
       <main class="p-4">
 
+        <!-- REAL-TIME ALERT: PENDING HOTSPOT REQUESTS -->
+        {% if pending_hotspot_requests|length > 0 %}
+        <div class="alert alert-warning border-warning border-opacity-50 bg-warning bg-opacity-10 d-flex align-items-center justify-content-between p-3 rounded-3 mb-4 shadow-sm">
+          <div class="d-flex align-items-center gap-3">
+            <div class="fs-4 text-warning"><i class="fas fa-bell fa-shake"></i></div>
+            <div>
+              <div class="fw-bold text-white fs-6">{{ pending_hotspot_requests|length }} Customer(s) Waiting for Hotspot Activation!</div>
+              <div class="small text-warning text-opacity-75">Customer submitted their mobile number on the MikroTik Hotspot popup and is waiting for internet approval.</div>
+            </div>
+          </div>
+          <button class="btn btn-warning btn-sm fw-bold px-3" onclick="switchSection('hotspot-requests')">
+            <i class="fas fa-arrow-right me-1"></i> Review & Approve Requests
+          </button>
+        </div>
+        {% endif %}
+
         <!-- ===================================================== -->
-        <!-- 1. DASHBOARD                                          -->
+        <!-- 1. DASHBOARD OVERVIEW                                 -->
         <!-- ===================================================== -->
         <div id="section-dashboard" class="content-section">
           
-          <!-- METRIC CARDS -->
+          <!-- Stat Cards -->
           <div class="row g-3 mb-4">
-            <div class="col-sm-6 col-xl-3">
-              <div class="metric-card">
-                <div class="metric-title">Active PPPoE Users</div>
-                <div class="metric-val text-primary">{{ pppoe_subs|length }}</div>
-                <div class="small text-secondary">Real PPPoE in <code>cybernet.db</code></div>
+            <div class="col-6 col-md-3">
+              <div class="stat-card">
+                <div class="stat-icon bg-primary bg-opacity-15 text-primary">
+                  <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-val">{{ total_subscribers }}</div>
+                <div class="stat-lbl">Total Subscribers</div>
               </div>
             </div>
 
-            <div class="col-sm-6 col-xl-3">
-              <div class="metric-card">
-                <div class="metric-title">Active Hotspot Users</div>
-                <div class="metric-val text-success">{{ hotspot_subs|length }}</div>
-                <div class="small text-secondary">Real Hotspot in <code>cybernet.db</code></div>
+            <div class="col-6 col-md-3">
+              <div class="stat-card">
+                <div class="stat-icon bg-success bg-opacity-15 text-success">
+                  <i class="fas fa-signal"></i>
+                </div>
+                <div class="stat-val">{{ active_subscribers }}</div>
+                <div class="stat-lbl">Active Customers</div>
               </div>
             </div>
 
-            <div class="col-sm-6 col-xl-3">
-              <div class="metric-card">
-                <div class="metric-title">Bypassed Devices (TVs)</div>
-                <div class="metric-val text-warning">{{ devices|length }}</div>
-                <div class="small text-secondary">MACs in <code>subscriber_devices</code></div>
+            <div class="col-6 col-md-3">
+              <div class="stat-card">
+                <div class="stat-icon bg-warning bg-opacity-15 text-warning">
+                  <i class="fas fa-tv"></i>
+                </div>
+                <div class="stat-val">{{ devices|length }}</div>
+                <div class="stat-lbl">Bypassed Devices (TV/MAC)</div>
               </div>
             </div>
 
-            <div class="col-sm-6 col-xl-3">
-              <div class="metric-card">
-                <div class="metric-title">Revenue This Month</div>
-                <div class="metric-val text-info">{{ month_revenue }} SAR</div>
-                <div class="small text-secondary">{{ payments|length }} real collections</div>
+            <div class="col-6 col-md-3">
+              <div class="stat-card">
+                <div class="stat-icon bg-info bg-opacity-15 text-info">
+                  <i class="fas fa-coins"></i>
+                </div>
+                <div class="stat-val">{{ month_revenue }} <small class="fs-6">SAR</small></div>
+                <div class="stat-lbl">This Month Collected</div>
               </div>
             </div>
           </div>
 
-          <!-- MIKROTIK ROUTER CARD -->
-          <div class="panel-card mb-4">
-            <div class="panel-header">
-              <h6 class="mb-0 fw-bold"><i class="fas fa-server text-primary me-2"></i>MikroTik Hardware Status</h6>
-              <span class="badge bg-success bg-opacity-25 text-success"><i class="fas fa-check-circle me-1"></i>TCP Socket Open</span>
+          <!-- Pending Hotspot Popups Quick Panel -->
+          {% if pending_hotspot_requests|length > 0 %}
+          <div class="panel-card border-warning mb-4">
+            <div class="panel-header bg-warning bg-opacity-10">
+              <h6 class="mb-0 fw-bold text-warning">
+                <i class="fas fa-mobile-screen-button me-2"></i>Live Hotspot Phone Submissions (Waiting for Approval)
+              </h6>
+              <span class="badge bg-warning text-dark">{{ pending_hotspot_requests|length }} Pending</span>
             </div>
-            <div class="p-3">
-              <div class="row g-3 align-items-center">
-                <div class="col-md-4 border-end border-secondary border-opacity-25">
-                  <div class="small text-secondary">GATEWAY HOST & PORT</div>
-                  <div class="fs-5 fw-bold font-mono text-white mt-1">{{ router_host }}:{{ router_port }}</div>
-                  <div class="small text-muted">Direct Ethernet Subnet</div>
-                </div>
-                <div class="col-md-4 border-end border-secondary border-opacity-25">
-                  <div class="small text-secondary">MEASURED PING</div>
-                  <div class="fs-5 fw-bold text-success mt-1">{{ router_ping }}</div>
-                  <div class="small text-success"><i class="fas fa-bolt me-1"></i>Real ICMP response time</div>
-                </div>
-                <div class="col-md-4">
-                  <div class="small text-secondary">AUTHENTICATION</div>
-                  <div class="small text-light mt-1">
-                    {% if router and router.password %}
-                      <span class="text-success"><i class="fas fa-check-circle me-1"></i>Credentials Configured</span>
-                    {% else %}
-                      <span class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Password not set. Configure in Router Hardware tab.</span>
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Customer Mobile</th>
+                    <th>Device MAC</th>
+                    <th>Detected Device</th>
+                    <th>Client IP</th>
+                    <th>Submitted Time</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in pending_hotspot_requests %}
+                  <tr>
+                    <td class="font-mono text-warning fw-bold fs-6">{{ r.phone }}</td>
+                    <td class="font-mono text-info">{{ r.mac_address }}</td>
+                    <td><span class="badge bg-secondary">{{ r.device_model or 'Mobile' }}</span></td>
+                    <td class="font-mono text-muted small">{{ r.ip_address }}</td>
+                    <td class="text-muted small">{{ r.created_at.strftime('%H:%M:%S') if r.created_at else '-' }}</td>
+                    <td>
+                      <button 
+                        class="btn btn-success btn-sm fw-bold px-3"
+                        onclick="openApproveModal({{ r.id }}, '{{ r.phone }}', '{{ r.mac_address }}', '{{ r.device_model or 'Mobile' }}')"
+                      >
+                        <i class="fas fa-check-circle me-1"></i> Approve & Activate
+                      </button>
+                      <form action="/api/hotspot/requests/{{ r.id }}/reject" method="POST" class="d-inline" onsubmit="return confirm('Reject connection request?');">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Reject</button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
             </div>
           </div>
+          {% endif %}
 
-          <!-- SUBSCRIBERS TABLE -->
+          <!-- Subscribers Real Table -->
           <div class="panel-card">
             <div class="panel-header">
-              <h6 class="mb-0 fw-bold"><i class="fas fa-users text-primary me-2"></i>Subscribers (Real State in cybernet.db)</h6>
-              <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newSubscriberModal"><i class="fas fa-plus me-1"></i>Add Subscriber</button>
+              <h6 class="mb-0 fw-bold"><i class="fas fa-users text-primary me-2"></i>Active Subscribers (Real State in cybernet.db)</h6>
+              <div class="d-flex gap-2">
+                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#bypassTvModal">
+                  <i class="fas fa-tv me-1"></i> Bypass Android TV
+                </button>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newSubscriberModal">
+                  <i class="fas fa-user-plus me-1"></i> Add Subscriber
+                </button>
+              </div>
             </div>
+            
             <div class="table-responsive">
               <table class="custom-table">
                 <thead>
                   <tr>
                     <th>Type</th>
-                    <th>Username</th>
-                    <th>Full Name & Phone</th>
-                    <th>Monthly Fee</th>
-                    <th>Expiry Date</th>
+                    <th>Mobile / Username</th>
+                    <th>Full Name</th>
+                    <th>Package Plan</th>
+                    <th>Multi-Device Quota</th>
                     <th>Status</th>
-                    <th class="text-end">Actions</th>
+                    <th>Expiry Date</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for s in subscribers %}
                   <tr>
-                    <td><span class="badge {{ 'bg-primary' if s.type == 'pppoe' else 'bg-success' }}">{{ s.type.upper() }}</span></td>
-                    <td><strong class="text-white font-mono">{{ s.username }}</strong></td>
                     <td>
-                      <div>{{ s.fullname }}</div>
-                      <small class="text-muted font-mono">{{ s.phone }}</small>
+                      <span class="badge {{ 'bg-primary' if s.type == 'pppoe' else 'bg-success' }} text-uppercase">
+                        {{ s.type }}
+                      </span>
                     </td>
-                    <td><strong class="text-success">{{ s.monthly_fee }} SAR</strong></td>
-                    <td>{{ s.expiry_date or 'No Expiry' }}</td>
+                    <td class="font-mono fw-bold text-white">{{ s.username }}</td>
+                    <td>{{ s.fullname }}</td>
+                    <td><span class="badge bg-secondary">{{ s.package.name if s.package else 'Default' }}</span></td>
                     <td>
-                      <span class="badge {{ 'bg-success' if s.status == 'active' else 'bg-danger' }}">{{ s.status.upper() }}</span>
+                      <span class="badge bg-info bg-opacity-25 text-info">
+                        {{ s.devices|length }} / {{ s.package.shared_users if s.package else 5 }} Devices
+                      </span>
+                      {% if s.type == 'hotspot' %}
+                      <button 
+                        class="btn btn-outline-warning btn-sm py-0 px-1 ms-1" 
+                        title="Add Android TV or extra phone"
+                        onclick="openAddDeviceForSub({{ s.id }}, '{{ s.phone or s.username }}')"
+                      >
+                        + TV
+                      </button>
+                      {% endif %}
                     </td>
-                    <td class="text-end">
-                      <form action="/api/subscribers/{{ s.id }}/suspend" method="POST" style="display:inline;">
-                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" title="Suspend"><i class="fas fa-ban"></i></button>
-                      </form>
+                    <td>
+                      {% if s.status == 'active' %}
+                      <span class="badge bg-success bg-opacity-25 text-success">Active</span>
+                      {% elif s.status == 'suspended' %}
+                      <span class="badge bg-danger bg-opacity-25 text-danger">Suspended</span>
+                      {% else %}
+                      <span class="badge bg-warning bg-opacity-25 text-warning">{{ s.status }}</span>
+                      {% endif %}
+                    </td>
+                    <td class="font-mono text-warning small">{{ s.expiry_date or 'No Expiry' }}</td>
+                    <td>
+                      <div class="d-flex gap-1">
+                        <!-- Renew Form -->
+                        <form action="/api/subscribers/{{ s.id }}/renew" method="POST" class="d-inline">
+                          <input type="hidden" name="amount" value="{{ s.monthly_fee or 30.0 }}">
+                          <input type="hidden" name="days" value="30">
+                          <input type="hidden" name="method" value="cash">
+                          <button type="submit" class="btn btn-outline-success btn-sm py-0 px-2" title="Renew for 30 Days">
+                            <i class="fas fa-arrows-rotate me-1"></i>Renew
+                          </button>
+                        </form>
+
+                        <!-- Suspend/Resume Form -->
+                        {% if s.status == 'active' %}
+                        <form action="/api/subscribers/{{ s.id }}/suspend" method="POST" class="d-inline" onsubmit="return confirm('Suspend subscriber on MikroTik?');">
+                          <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2" title="Suspend">
+                            <i class="fas fa-pause"></i>
+                          </button>
+                        </form>
+                        {% else %}
+                        <form action="/api/subscribers/{{ s.id }}/resume" method="POST" class="d-inline">
+                          <button type="submit" class="btn btn-outline-primary btn-sm py-0 px-2" title="Resume">
+                            <i class="fas fa-play"></i>
+                          </button>
+                        </form>
+                        {% endif %}
+                      </div>
                     </td>
                   </tr>
                   {% else %}
                   <tr>
-                    <td colspan="7" class="text-center text-muted py-4">
-                      <i class="fas fa-users fs-3 text-secondary mb-2 d-block"></i>
+                    <td colspan="8" class="text-center text-muted py-5">
+                      <i class="fas fa-users-slash fs-2 text-secondary mb-3 d-block"></i>
                       <strong>0 Subscribers in cybernet.db</strong>
-                      <div class="small text-secondary mt-1">Add your real users here to test provisioning directly on your MikroTik!</div>
-                      <button class="btn btn-primary btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#newSubscriberModal">
-                        <i class="fas fa-plus me-1"></i> Add First Subscriber
+                      <div class="small mt-1">Customers who connect to Hotspot Wi-Fi and submit their phone number will automatically appear here!</div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================================================== -->
+        <!-- 2. HOTSPOT CONNECTION REQUESTS (POPUP SUBMISSIONS)    -->
+        <!-- ===================================================== -->
+        <div id="section-hotspot-requests" class="content-section d-none">
+          
+          <div class="panel-card mb-4">
+            <div class="panel-header">
+              <h5 class="fw-bold mb-0">
+                <i class="fas fa-mobile-screen-button text-warning me-2"></i>Hotspot Phone Submissions ({{ recent_hotspot_requests|length }})
+              </h5>
+              <span class="badge bg-secondary">Submitted via MikroTik Captive Portal Popup</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Customer Mobile</th>
+                    <th>Device MAC Address</th>
+                    <th>Device Model</th>
+                    <th>IP Address</th>
+                    <th>Status</th>
+                    <th>Submitted At</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in recent_hotspot_requests %}
+                  <tr>
+                    <td class="font-mono text-warning fw-bold fs-6">{{ r.phone }}</td>
+                    <td class="font-mono text-info">{{ r.mac_address }}</td>
+                    <td><span class="badge bg-secondary">{{ r.device_model or 'Mobile' }}</span></td>
+                    <td class="font-mono text-muted small">{{ r.ip_address }}</td>
+                    <td>
+                      {% if r.status == 'pending' %}
+                      <span class="badge bg-warning text-dark pulse-warning">Pending Approval</span>
+                      {% elif r.status == 'approved' %}
+                      <span class="badge bg-success">Approved & Active</span>
+                      {% elif r.status == 'rejected' %}
+                      <span class="badge bg-danger">Rejected</span>
+                      {% else %}
+                      <span class="badge bg-secondary">{{ r.status }}</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-muted small">{{ r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '-' }}</td>
+                    <td>
+                      {% if r.status == 'pending' %}
+                      <button 
+                        class="btn btn-success btn-sm fw-bold px-3"
+                        onclick="openApproveModal({{ r.id }}, '{{ r.phone }}', '{{ r.mac_address }}', '{{ r.device_model or 'Mobile' }}')"
+                      >
+                        <i class="fas fa-check-circle me-1"></i> Approve & Activate
                       </button>
+                      <form action="/api/hotspot/requests/{{ r.id }}/reject" method="POST" class="d-inline" onsubmit="return confirm('Reject request?');">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Reject</button>
+                      </form>
+                      {% else %}
+                      <span class="text-muted small">Processed</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% else %}
+                  <tr>
+                    <td colspan="7" class="text-center text-muted py-5">
+                      <i class="fas fa-wifi fs-2 text-secondary mb-3 d-block"></i>
+                      No captive portal requests yet.
+                      <div class="small mt-1">When any customer connects to WiFi and submits their phone number on the popup, it appears here instantly!</div>
                     </td>
                   </tr>
                   {% endfor %}
@@ -399,82 +604,130 @@
             </div>
           </div>
 
+          <!-- Captive Portal Deployment Guide -->
+          <div class="panel-card border-info">
+            <div class="panel-header bg-info bg-opacity-10">
+              <h6 class="mb-0 fw-bold text-info"><i class="fas fa-download me-2"></i>MikroTik Hotspot Captive Portal Setup</h6>
+              <div class="d-flex gap-2">
+                <a href="/hotspot/download-login" class="btn btn-info btn-sm text-dark fw-bold">
+                  <i class="fas fa-download me-1"></i> Download login.html
+                </a>
+                <a href="/hotspot/login" target="_blank" class="btn btn-outline-info btn-sm">
+                  <i class="fas fa-external-link-alt me-1"></i> Test Portal in Browser
+                </a>
+              </div>
+            </div>
+            <div class="p-4">
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <h6 class="text-white fw-bold">Step 1: Add Walled Garden on MikroTik</h6>
+                  <p class="small text-muted">Allow unauthenticated phones to submit requests to this server:</p>
+                  <pre class="bg-dark p-3 rounded-3 text-warning font-mono small border border-secondary border-opacity-25 user-select-all mb-3">/ip hotspot walled-garden ip
+add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
+                </div>
+                <div class="col-md-6">
+                  <h6 class="text-white fw-bold">Step 2: Upload login.html to Router</h6>
+                  <p class="small text-muted">In WinBox, open <strong>Files</strong>, open the <code>hotspot/</code> directory, and replace <code>login.html</code> with the downloaded file.</p>
+                  <div class="small text-secondary">
+                    <i class="fas fa-check text-success me-1"></i> Responsive mobile card design<br>
+                    <i class="fas fa-check text-success me-1"></i> Self-contained styles (no CDN dependencies)<br>
+                    <i class="fas fa-check text-success me-1"></i> Automatic 5-second polling until admin approves
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- ===================================================== -->
-        <!-- 2. PPPoE SUBSCRIBERS                                  -->
+        <!-- 3. HOTSPOT SUBSCRIBERS                                -->
+        <!-- ===================================================== -->
+        <div id="section-hotspot" class="content-section d-none">
+          <div class="panel-card">
+            <div class="panel-header">
+              <h5 class="fw-bold mb-0">Hotspot Subscribers ({{ hotspot_subscribers }})</h5>
+              <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#newSubscriberModal">
+                <i class="fas fa-user-plus me-1"></i> Add Hotspot User
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Customer Phone</th>
+                    <th>Full Name</th>
+                    <th>Package</th>
+                    <th>Device Quota</th>
+                    <th>Expiry Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for s in subscribers if s.type == 'hotspot' %}
+                  <tr>
+                    <td class="font-mono text-success fw-bold">{{ s.phone or s.username }}</td>
+                    <td>{{ s.fullname }}</td>
+                    <td>{{ s.package.name if s.package else 'Default' }}</td>
+                    <td>
+                      <span class="badge bg-secondary">{{ s.devices|length }} / {{ s.package.shared_users if s.package else 5 }} Devices</span>
+                      <button class="btn btn-outline-warning btn-sm py-0 px-1 ms-1" onclick="openAddDeviceForSub({{ s.id }}, '{{ s.phone or s.username }}')">+ TV</button>
+                    </td>
+                    <td class="font-mono text-warning">{{ s.expiry_date or 'None' }}</td>
+                    <td>
+                      <form action="/api/subscribers/{{ s.id }}/renew" method="POST" class="d-inline">
+                        <input type="hidden" name="amount" value="{{ s.monthly_fee or 30.0 }}">
+                        <input type="hidden" name="days" value="30">
+                        <button type="submit" class="btn btn-outline-success btn-sm py-0 px-2">Renew</button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% else %}
+                  <tr>
+                    <td colspan="6" class="text-center text-muted py-4">No Hotspot subscribers yet.</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================================================== -->
+        <!-- 4. PPPOE SUBSCRIBERS                                  -->
         <!-- ===================================================== -->
         <div id="section-pppoe" class="content-section d-none">
           <div class="panel-card">
             <div class="panel-header">
-              <h5 class="fw-bold mb-0">PPPoE Subscribers ({{ pppoe_subs|length }})</h5>
-              <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newSubscriberModal"><i class="fas fa-plus me-1"></i>Add PPPoE User</button>
+              <h5 class="fw-bold mb-0">PPPoE Subscribers ({{ pppoe_subscribers }})</h5>
+              <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newSubscriberModal">
+                <i class="fas fa-user-plus me-1"></i> Add PPPoE User
+              </button>
             </div>
             <div class="table-responsive">
               <table class="custom-table">
                 <thead>
                   <tr>
                     <th>Username</th>
-                    <th>Customer Name</th>
-                    <th>Phone</th>
-                    <th>Expiry Date</th>
-                    <th>Fee</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for s in pppoe_subs %}
-                  <tr>
-                    <td><strong class="text-white font-mono">{{ s.username }}</strong></td>
-                    <td>{{ s.fullname }}</td>
-                    <td class="font-mono">{{ s.phone }}</td>
-                    <td>{{ s.expiry_date }}</td>
-                    <td><strong class="text-success">{{ s.monthly_fee }} SAR</strong></td>
-                    <td><span class="badge bg-success">ACTIVE</span></td>
-                  </tr>
-                  {% else %}
-                  <tr>
-                    <td colspan="6" class="text-center text-muted py-4">No PPPoE subscribers created yet.</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- ===================================================== -->
-        <!-- 3. HOTSPOT USERS                                      -->
-        <!-- ===================================================== -->
-        <div id="section-hotspot" class="content-section d-none">
-          <div class="panel-card">
-            <div class="panel-header">
-              <h5 class="fw-bold mb-0">Hotspot Users ({{ hotspot_subs|length }})</h5>
-              <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#newSubscriberModal"><i class="fas fa-plus me-1"></i>Add Hotspot User</button>
-            </div>
-            <div class="table-responsive">
-              <table class="custom-table">
-                <thead>
-                  <tr>
-                    <th>Username / Phone</th>
                     <th>Full Name</th>
-                    <th>Expiry Date</th>
-                    <th>Fee</th>
+                    <th>Phone</th>
+                    <th>Package</th>
                     <th>Status</th>
+                    <th>Expiry Date</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {% for s in hotspot_subs %}
+                  {% for s in subscribers if s.type == 'pppoe' %}
                   <tr>
-                    <td><strong class="text-white font-mono">{{ s.username }}</strong></td>
+                    <td class="font-mono text-primary fw-bold">{{ s.username }}</td>
                     <td>{{ s.fullname }}</td>
-                    <td>{{ s.expiry_date }}</td>
-                    <td><strong class="text-success">{{ s.monthly_fee }} SAR</strong></td>
-                    <td><span class="badge bg-success">ACTIVE</span></td>
+                    <td>{{ s.phone }}</td>
+                    <td>{{ s.package.name if s.package else 'Default' }}</td>
+                    <td><span class="badge bg-success">Active</span></td>
+                    <td class="font-mono text-warning">{{ s.expiry_date or 'None' }}</td>
                   </tr>
                   {% else %}
                   <tr>
-                    <td colspan="5" class="text-center text-muted py-4">No Hotspot users created yet.</td>
+                    <td colspan="6" class="text-center text-muted py-4">No PPPoE subscribers yet.</td>
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -484,39 +737,46 @@
         </div>
 
         <!-- ===================================================== -->
-        <!-- 4. DEVICES / ANDROID TV MAC BYPASS                    -->
+        <!-- 5. ANDROID TV & BYPASSED DEVICES                      -->
         <!-- ===================================================== -->
         <div id="section-devices" class="content-section d-none">
           <div class="panel-card">
             <div class="panel-header">
-              <h5 class="fw-bold mb-0">Bypassed Devices & Android TVs ({{ devices|length }})</h5>
-              <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#bypassTvModal"><i class="fas fa-tv me-1"></i>Bypass New MAC</button>
+              <div>
+                <h5 class="fw-bold mb-0">Android TV & Bypassed Devices ({{ devices|length }})</h5>
+                <small class="text-muted">Direct MAC Address bypass in MikroTik (<code>/ip hotspot ip-binding type=bypassed</code>) - No browser login required.</small>
+              </div>
+              <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#bypassTvModal">
+                <i class="fas fa-tv me-1"></i> Bypass New Device
+              </button>
             </div>
             <div class="table-responsive">
               <table class="custom-table">
                 <thead>
                   <tr>
                     <th>Device Name</th>
+                    <th>Subscriber (Phone)</th>
                     <th>MAC Address</th>
                     <th>Type</th>
-                    <th>Bypassed State</th>
-                    <th>Created Date</th>
+                    <th>Bypass State</th>
+                    <th>Date Added</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for d in devices %}
                   <tr>
                     <td><strong>{{ d.device_name }}</strong></td>
-                    <td class="font-mono text-info">{{ d.mac_address }}</td>
+                    <td class="font-mono text-warning">{{ d.subscriber.phone if d.subscriber else '-' }} ({{ d.subscriber.fullname if d.subscriber else '' }})</td>
+                    <td class="font-mono text-info fw-bold">{{ d.mac_address }}</td>
                     <td><span class="badge bg-secondary">{{ d.device_type.upper() }}</span></td>
-                    <td><span class="badge bg-success">BYPASSED (No Login Needed)</span></td>
-                    <td class="small text-muted">{{ d.created_at }}</td>
+                    <td><span class="badge bg-success"><i class="fas fa-check me-1"></i>BYPASSED (No Popup Required)</span></td>
+                    <td class="small text-muted">{{ d.created_at.strftime('%Y-%m-%d') if d.created_at else '-' }}</td>
                   </tr>
                   {% else %}
                   <tr>
-                    <td colspan="5" class="text-center text-muted py-4">
+                    <td colspan="6" class="text-center text-muted py-4">
                       <i class="fas fa-tv fs-2 text-secondary mb-2 d-block"></i>
-                      No devices bypassed yet. Click 'Bypass New MAC' to register an Android TV!
+                      No devices bypassed yet. Click 'Bypass Android TV' to register an Android TV or Smart TV!
                     </td>
                   </tr>
                   {% endfor %}
@@ -527,7 +787,7 @@
         </div>
 
         <!-- ===================================================== -->
-        <!-- 5. COLLECTIONS                                        -->
+        <!-- 6. COLLECTIONS & PAYMENTS                             -->
         <!-- ===================================================== -->
         <div id="section-collections" class="content-section d-none">
           <div class="panel-card">
@@ -541,6 +801,7 @@
                     <th>Receipt #</th>
                     <th>Amount</th>
                     <th>Method</th>
+                    <th>Subscriber</th>
                     <th>Notes</th>
                     <th>Date</th>
                   </tr>
@@ -551,12 +812,13 @@
                     <td class="font-mono text-warning">{{ p.receipt_no }}</td>
                     <td><strong class="text-success">{{ p.amount }} SAR</strong></td>
                     <td><span class="badge bg-secondary">{{ p.method.upper() }}</span></td>
+                    <td class="font-mono">{{ p.subscriber.phone if p.subscriber else '-' }}</td>
                     <td>{{ p.notes or '-' }}</td>
-                    <td class="text-muted small">{{ p.payment_date }}</td>
+                    <td class="text-muted small">{{ p.payment_date.strftime('%Y-%m-%d %H:%M') if p.payment_date else '-' }}</td>
                   </tr>
                   {% else %}
                   <tr>
-                    <td colspan="5" class="text-center text-muted py-4">No payments recorded yet.</td>
+                    <td colspan="6" class="text-center text-muted py-4">No payments recorded yet.</td>
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -566,7 +828,7 @@
         </div>
 
         <!-- ===================================================== -->
-        <!-- 6. PACKAGES                                           -->
+        <!-- 7. PACKAGES                                           -->
         <!-- ===================================================== -->
         <div id="section-packages" class="content-section d-none">
           <div class="d-flex justify-content-between align-items-center mb-3">
@@ -583,7 +845,7 @@
                   <li><i class="fas fa-check text-success me-2"></i>Speed: <strong>{{ p.rate_limit or 'Standard' }}</strong></li>
                   <li><i class="fas fa-check text-success me-2"></i>Validity: <strong>{{ p.validity_days }} Days</strong></li>
                   <li><i class="fas fa-check text-success me-2"></i>Router Profile: <code>{{ p.mikrotik_profile }}</code></li>
-                  <li><i class="fas fa-check text-success me-2"></i>Shared Devices: <strong>{{ p.shared_users }}</strong></li>
+                  <li><i class="fas fa-check text-success me-2"></i>Shared Devices: <strong>{{ p.shared_users }} Devices</strong></li>
                 </ul>
               </div>
             </div>
@@ -592,22 +854,22 @@
         </div>
 
         <!-- ===================================================== -->
-        <!-- 7. ROUTER HARDWARE SETTINGS                           -->
+        <!-- 8. ROUTER HARDWARE SETTINGS                           -->
         <!-- ===================================================== -->
         <div id="section-mikrotik" class="content-section d-none">
           <div class="panel-card">
             <div class="panel-header">
               <h5 class="fw-bold mb-0">MikroTik RouterOS Connection</h5>
-              <span class="badge bg-success bg-opacity-25 text-success">Socket Active</span>
+              <span class="badge bg-success"><span class="pulse-dot me-1"></span>Port 8728 Open</span>
             </div>
             <div class="p-4">
               <div class="row g-4">
                 <div class="col-md-6">
                   <div class="p-3 rounded-3 bg-dark border border-secondary border-opacity-25">
-                    <h6 class="fw-bold text-white mb-3">Network Gateway</h6>
-                    <table class="table table-dark table-sm mb-0">
+                    <h6 class="fw-bold text-white mb-3">Active Router Status</h6>
+                    <table class="table table-sm table-borderless text-secondary small">
                       <tr>
-                        <td class="text-secondary">Gateway Host:</td>
+                        <td class="text-secondary">Router IP:</td>
                         <td class="font-mono text-white fw-bold">{{ router_host }}</td>
                       </tr>
                       <tr>
@@ -655,7 +917,83 @@
     </div>
   </div>
 
-  <!-- MODAL: ADD SUBSCRIBER -->
+  <!-- MODAL: APPROVE HOTSPOT REQUEST -->
+  <div class="modal fade" id="modalApproveHotspot" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-dark border-secondary">
+        <form id="formApproveHotspot" action="" method="POST">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title text-white"><i class="fas fa-wifi text-success me-2"></i>Approve & Activate Customer</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="p-3 rounded-3 bg-secondary bg-opacity-10 border border-secondary border-opacity-25 mb-3">
+              <div class="d-flex justify-content-between">
+                <span class="text-secondary small">Customer Mobile:</span>
+                <strong class="text-warning font-mono fs-6" id="approveModalPhone">0597595059</strong>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <span class="text-secondary small">Device MAC:</span>
+                <span class="text-info font-mono small" id="approveModalMac">AA:BB:CC:DD:EE:FF</span>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <span class="text-secondary small">Device Type:</span>
+                <span class="text-white small" id="approveModalDevice">Apple iPhone</span>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-secondary small fw-bold">Customer Full Name</label>
+              <input type="text" name="fullname" id="approveModalFullname" class="form-control bg-secondary bg-opacity-25 border-secondary text-white" placeholder="Customer Name">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-secondary small fw-bold">Select Package Plan</label>
+              <select name="package_id" id="approvePackageSelect" class="form-select bg-secondary bg-opacity-25 border-secondary text-white" onchange="updateApprovePrice()">
+                {% for p in packages if p.type == 'hotspot' %}
+                <option value="{{ p.id }}" data-price="{{ p.price }}" data-days="{{ p.validity_days }}" {{ 'selected' if loop.first }}>
+                  {{ p.name }} ({{ p.price }} SAR - {{ p.validity_days }} Days - {{ p.shared_users }} Devices)
+                </option>
+                {% else %}
+                {% for p in packages %}
+                <option value="{{ p.id }}" data-price="{{ p.price }}" data-days="{{ p.validity_days }}">{{ p.name }} ({{ p.price }} SAR)</option>
+                {% endfor %}
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label text-secondary small fw-bold">Validity Days</label>
+                <input type="number" name="validity_days" id="approveValidityDays" class="form-control bg-secondary bg-opacity-25 border-secondary text-white" value="30">
+              </div>
+              <div class="col-6">
+                <label class="form-label text-secondary small fw-bold">Amount Paid (SAR)</label>
+                <input type="number" step="0.5" name="amount_paid" id="approveAmountPaid" class="form-control bg-secondary bg-opacity-25 border-secondary text-white" value="30.0">
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label text-secondary small fw-bold">Payment Method</label>
+              <select name="payment_method" class="form-select bg-secondary bg-opacity-25 border-secondary text-white">
+                <option value="cash" selected>Cash</option>
+                <option value="transfer">Bank Transfer</option>
+                <option value="stc_pay">STC Pay / Card</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer border-secondary">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success btn-sm fw-bold">
+              <i class="fas fa-check-circle me-1"></i> Activate & Grant Internet
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD SUBSCRIBER (MANUAL) -->
   <div class="modal fade" id="newSubscriberModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-dark border-secondary">
@@ -668,17 +1006,17 @@
             <div class="mb-3">
               <label class="form-label text-secondary small fw-bold">Subscriber Type</label>
               <select name="type" class="form-select bg-secondary bg-opacity-25 border-secondary text-white">
-                <option value="pppoe" selected>PPPoE (Fiber / Broadband)</option>
-                <option value="hotspot">Hotspot (Captive Portal WiFi)</option>
+                <option value="hotspot" selected>Hotspot (WiFi Multi-Device)</option>
+                <option value="pppoe">PPPoE (Fiber / Broadband)</option>
               </select>
             </div>
             <div class="mb-3">
-              <label class="form-label text-secondary small fw-bold">Username</label>
-              <input type="text" name="username" class="form-control bg-secondary bg-opacity-25 border-secondary text-white" placeholder="e.g. test_user1" required>
+              <label class="form-label text-secondary small fw-bold">Username / Mobile Number</label>
+              <input type="text" name="username" class="form-control bg-secondary bg-opacity-25 border-secondary text-white font-mono" placeholder="e.g. 0597595059" required>
             </div>
             <div class="mb-3">
               <label class="form-label text-secondary small fw-bold">Password</label>
-              <input type="text" name="password" class="form-control bg-secondary bg-opacity-25 border-secondary text-white" placeholder="e.g. 123456" required>
+              <input type="text" name="password" class="form-control bg-secondary bg-opacity-25 border-secondary text-white font-mono" placeholder="e.g. 123456" required>
             </div>
             <div class="mb-3">
               <label class="form-label text-secondary small fw-bold">Full Name</label>
@@ -686,7 +1024,7 @@
             </div>
             <div class="mb-3">
               <label class="form-label text-secondary small fw-bold">Phone Number</label>
-              <input type="text" name="phone" class="form-control bg-secondary bg-opacity-25 border-secondary text-white" placeholder="e.g. 0597595059" required>
+              <input type="text" name="phone" class="form-control bg-secondary bg-opacity-25 border-secondary text-white font-mono" placeholder="e.g. 0597595059" required>
             </div>
             <div class="mb-3">
               <label class="form-label text-secondary small fw-bold">Package Plan</label>
@@ -706,39 +1044,49 @@
     </div>
   </div>
 
-  <!-- MODAL: BYPASS ANDROID TV (MAC) -->
+  <!-- MODAL: BYPASS ANDROID TV / MAC -->
   <div class="modal fade" id="bypassTvModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-dark border-secondary">
         <form action="/api/devices/bypass" method="POST">
           <div class="modal-header border-secondary">
-            <h5 class="modal-title text-white"><i class="fas fa-tv text-warning me-2"></i>Bypass Android TV / MAC</h5>
+            <h5 class="modal-title text-white"><i class="fas fa-tv text-warning me-2"></i>Bypass Android TV / Device MAC</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
             <div class="mb-3">
-              <label class="form-label text-secondary small fw-bold">Link to Subscriber</label>
-              <select name="subscriber_id" class="form-select bg-secondary bg-opacity-25 border-secondary text-white">
+              <label class="form-label text-secondary small fw-bold">Customer Account (Mobile / Name)</label>
+              <select name="subscriber_id" id="bypassSubscriberSelect" class="form-select bg-secondary bg-opacity-25 border-secondary text-white" required>
                 {% for s in subscribers %}
-                <option value="{{ s.id }}">{{ s.username }} ({{ s.fullname }})</option>
+                <option value="{{ s.id }}">{{ s.phone or s.username }} - {{ s.fullname }} ({{ s.type.upper() }})</option>
                 {% else %}
-                <option disabled selected>Please add a subscriber first</option>
+                <option disabled selected>No subscribers yet. Please add a customer first.</option>
                 {% endfor %}
               </select>
             </div>
             <div class="mb-3">
               <label class="form-label text-secondary small fw-bold">Device Name</label>
-              <input type="text" name="device_name" class="form-control bg-secondary bg-opacity-25 border-secondary text-white" placeholder="e.g. Living Room Android TV" required>
+              <input type="text" name="device_name" class="form-control bg-secondary bg-opacity-25 border-secondary text-white" placeholder="e.g. Living Room Android TV" value="Android TV" required>
             </div>
             <div class="mb-3">
-              <label class="form-label text-secondary small fw-bold">MAC Address</label>
+              <label class="form-label text-secondary small fw-bold">Device Type</label>
+              <select name="device_type" class="form-select bg-secondary bg-opacity-25 border-secondary text-white">
+                <option value="tv" selected>Android TV / Smart TV</option>
+                <option value="console">PlayStation / Xbox / Console</option>
+                <option value="phone">Smartphone</option>
+                <option value="pc">Laptop / PC</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-secondary small fw-bold">Device MAC Address</label>
               <input type="text" name="mac_address" class="form-control bg-secondary bg-opacity-25 border-secondary text-white font-mono" placeholder="e.g. A4:C1:38:12:34:56" required>
-              <small class="text-muted">Will be added as <code>/ip hotspot ip-binding type=bypassed</code></small>
+              <small class="text-muted">Bypasses captive portal directly on MikroTik: <code>/ip hotspot ip-binding type=bypassed</code></small>
             </div>
           </div>
           <div class="modal-footer border-secondary">
             <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-warning btn-sm"><i class="fas fa-tv me-1"></i>Bypass Device</button>
+            <button type="submit" class="btn btn-warning btn-sm fw-bold"><i class="fas fa-tv me-1"></i>Bypass Device on MikroTik</button>
           </div>
         </form>
       </div>
@@ -749,15 +1097,77 @@
   <script>
     function switchSection(secId) {
       document.querySelectorAll('.content-section').forEach(el => el.classList.add('d-none'));
-      const active = document.getElementById('section-' + secId);
-      if (active) active.classList.remove('d-none');
-
       document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
-      const clicked = event ? event.currentTarget : null;
-      if (clicked && clicked.classList.contains('sidebar-link')) {
-        clicked.classList.add('active');
+
+      const target = document.getElementById('section-' + secId);
+      if (target) {
+        target.classList.remove('d-none');
       }
-      document.getElementById('appSidebar').classList.remove('show');
+
+      // Set active sidebar
+      const links = document.querySelectorAll('.sidebar-link');
+      links.forEach(l => {
+        if (l.getAttribute('onclick') && l.getAttribute('onclick').includes(secId)) {
+          l.classList.add('active');
+        }
+      });
+
+      // Update Header Title
+      const titles = {
+        'dashboard': 'ISP Operations Center',
+        'hotspot-requests': 'Hotspot Phone Submissions (Live)',
+        'hotspot': 'Hotspot Subscriber Accounts',
+        'pppoe': 'PPPoE Fiber / Broadband Accounts',
+        'devices': 'Android TV & Bypassed Devices',
+        'collections': 'Billing & Payments',
+        'packages': 'Internet Packages & Rate Limits',
+        'mikrotik': 'MikroTik RouterOS Settings'
+      };
+      if (titles[secId]) {
+        document.getElementById('pageTitle').textContent = titles[secId];
+      }
+
+      // Close mobile sidebar if open
+      const sb = document.getElementById('appSidebar');
+      if (sb.classList.contains('show')) {
+        sb.classList.remove('show');
+      }
+    }
+
+    function toggleSidebar() {
+      document.getElementById('appSidebar').classList.toggle('show');
+    }
+
+    function openApproveModal(reqId, phone, mac, device) {
+      document.getElementById('formApproveHotspot').action = '/api/hotspot/requests/' + reqId + '/approve';
+      document.getElementById('approveModalPhone').textContent = phone;
+      document.getElementById('approveModalMac').textContent = mac;
+      document.getElementById('approveModalDevice').textContent = device;
+      document.getElementById('approveModalFullname').value = phone;
+      updateApprovePrice();
+
+      var modal = new bootstrap.Modal(document.getElementById('modalApproveHotspot'));
+      modal.show();
+    }
+
+    function updateApprovePrice() {
+      var sel = document.getElementById('approvePackageSelect');
+      var opt = sel.options[sel.selectedIndex];
+      if (opt) {
+        var price = opt.getAttribute('data-price') || 30.0;
+        var days = opt.getAttribute('data-days') || 30;
+        document.getElementById('approveAmountPaid').value = price;
+        document.getElementById('approveValidityDays').value = days;
+      }
+    }
+
+    function openAddDeviceForSub(subId, label) {
+      var sel = document.getElementById('bypassSubscriberSelect');
+      if (sel) {
+        sel.value = subId;
+      }
+      var modal = new bootstrap.Modal(document.getElementById('bypassTvModal'));
+      modal.show();
     }
   </script>
 </body>
