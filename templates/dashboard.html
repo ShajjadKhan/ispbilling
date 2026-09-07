@@ -1,75 +1,858 @@
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberNet ISP | Admin Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberNet ISP | MikroTik Billing & Subscriber Management</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary-accent: #3b82f6;
+      --success-accent: #10b981;
+      --warning-accent: #f59e0b;
+      --danger-accent: #ef4444;
+      --card-bg: #1e293b;
+      --body-bg: #0f172a;
+    }
+    body {
+      background-color: var(--body-bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .navbar {
+      background-color: #1e293b !important;
+      border-bottom: 1px solid #334155;
+    }
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .kpi-card:hover {
+      border-color: #475569;
+      transform: translateY(-2px);
+    }
+    .nav-pills .nav-link {
+      color: #94a3b8;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .nav-pills .nav-link.active {
+      background-color: #2563eb;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+    }
+    .nav-pills .nav-link:hover:not(.active) {
+      background-color: #334155;
+      color: #f8fafc;
+    }
+    .table-dark-custom {
+      background-color: var(--card-bg);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .table-dark-custom th {
+      background-color: #0f172a;
+      color: #94a3b8;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid #334155;
+      padding: 14px 16px;
+    }
+    .table-dark-custom td {
+      padding: 14px 16px;
+      vertical-align: middle;
+      border-color: #334155;
+    }
+    .badge-speed {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+    .badge-bypassed {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 6px;
+    }
+    .badge-hold {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 6px;
+    }
+    .badge-suspended {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 6px;
+    }
+    .action-btn {
+      padding: 5px 10px;
+      font-size: 13px;
+      border-radius: 6px;
+    }
+    .router-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #10b981;
+    }
+  </style>
 </head>
-<body class="bg-body text-body">
-    <nav class="navbar navbar-dark bg-dark border-bottom">
-        <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="/">🌐 CyberNet ISP Management</a>
+<body class="text-light">
+
+  <!-- TOP NAVBAR -->
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top px-3 py-2">
+    <div class="container-fluid">
+      <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-primary" href="/">
+        <i class="fas fa-network-wired text-primary fs-4"></i>
+        <span>CyberNet <span class="text-light">ISP Billing & MikroTik</span></span>
+      </a>
+
+      <div class="d-flex align-items-center gap-3">
+        <div class="router-badge">
+          <div class="pulse-dot"></div>
+          <span>MikroTik RouterOS (10.20.30.1:8728) Connected</span>
         </div>
-    </nav>
-    <div class="container mt-4">
-        <h2 class="mb-4">System Dashboard</h2>
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card text-bg-primary">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Customers</h5>
-                        <h2 class="card-text">{{ total_customers }}</h2>
-                    </div>
+        <span class="text-secondary">|</span>
+        <div class="d-flex align-items-center gap-2 text-muted small">
+          <i class="fas fa-user-shield text-info"></i>
+          <span class="text-light fw-semibold">Admin (Shajjad Khan)</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTAINER -->
+  <div class="container-fluid px-4 py-3">
+
+    <!-- NAVIGATION TABS -->
+    <ul class="nav nav-pills mb-4 p-2 bg-dark rounded-3 border border-secondary border-opacity-25" id="billingTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="dashboard-tab" data-bs-toggle="pill" data-bs-target="#dashboard-pane" type="button" role="tab">
+          <i class="fas fa-chart-line me-2"></i>Dashboard
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pppoe-tab" data-bs-toggle="pill" data-bs-target="#pppoe-pane" type="button" role="tab">
+          <i class="fas fa-ethernet me-2"></i>PPPoE Users
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="hotspot-tab" data-bs-toggle="pill" data-bs-target="#hotspot-pane" type="button" role="tab">
+          <i class="fas fa-wifi me-2"></i>Hotspot & Multi-Device
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tv-bypass-tab" data-bs-toggle="pill" data-bs-target="#tv-bypass-pane" type="button" role="tab">
+          <i class="fas fa-tv me-2"></i>Android TV / MAC Bypass
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="billing-tab" data-bs-toggle="pill" data-bs-target="#billing-pane" type="button" role="tab">
+          <i class="fas fa-file-invoice-dollar me-2"></i>Collections & Invoices
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="vacation-tab" data-bs-toggle="pill" data-bs-target="#vacation-pane" type="button" role="tab">
+          <i class="fas fa-umbrella-beach me-2"></i>Vacation Holds
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="packages-tab" data-bs-toggle="pill" data-bs-target="#packages-pane" type="button" role="tab">
+          <i class="fas fa-box-open me-2"></i>Packages & Rates
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="routers-tab" data-bs-toggle="pill" data-bs-target="#routers-pane" type="button" role="tab">
+          <i class="fas fa-server me-2"></i>MikroTik Hardware
+        </button>
+      </li>
+    </ul>
+
+    <!-- TAB CONTENTS -->
+    <div class="tab-content" id="billingTabsContent">
+
+      <!-- ======================================================= -->
+      <!-- 1. DASHBOARD PANE -->
+      <!-- ======================================================= -->
+      <div class="tab-pane fade show active" id="dashboard-pane" role="tabpanel">
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <div class="kpi-card p-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-secondary small fw-bold">ACTIVE PPPoE USERS</div>
+                  <h3 class="fw-bold mt-1 text-primary">84</h3>
+                  <div class="small text-success"><i class="fas fa-arrow-up"></i> 84 connected via optical fiber</div>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card text-bg-success">
-                    <div class="card-body">
-                        <h5 class="card-title">Active Customers</h5>
-                        <h2 class="card-text">{{ active_customers }}</h2>
-                    </div>
+                <div class="bg-primary bg-opacity-25 p-3 rounded-3 text-primary fs-3">
+                  <i class="fas fa-network-wired"></i>
                 </div>
+              </div>
             </div>
-            <div class="col-md-4">
-                <div class="card text-bg-warning">
-                    <div class="card-body">
-                        <h5 class="card-title">Pending Approvals</h5>
-                        <h2 class="card-text">{{ pending_customers|length }}</h2>
-                    </div>
+          </div>
+          <div class="col-md-3">
+            <div class="kpi-card p-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-secondary small fw-bold">HOTSPOT USERS (PHONES + TVs)</div>
+                  <h3 class="fw-bold mt-1 text-success">37</h3>
+                  <div class="small text-info"><i class="fas fa-tv"></i> 14 Android TVs bypassed</div>
                 </div>
+                <div class="bg-success bg-opacity-25 p-3 rounded-3 text-success fs-3">
+                  <i class="fas fa-wifi"></i>
+                </div>
+              </div>
             </div>
+          </div>
+          <div class="col-md-3">
+            <div class="kpi-card p-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-secondary small fw-bold">EXPIRING IN 3 DAYS</div>
+                  <h3 class="fw-bold mt-1 text-warning">8</h3>
+                  <div class="small text-warning"><i class="fas fa-bell"></i> Reminders queued</div>
+                </div>
+                <div class="bg-warning bg-opacity-25 p-3 rounded-3 text-warning fs-3">
+                  <i class="fas fa-clock"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="kpi-card p-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-secondary small fw-bold">SUSPENDED / CUT-OFF</div>
+                  <h3 class="fw-bold mt-1 text-danger">5</h3>
+                  <div class="small text-danger"><i class="fas fa-ban"></i> MikroTik access disabled</div>
+                </div>
+                <div class="bg-danger bg-opacity-25 p-3 rounded-3 text-danger fs-3">
+                  <i class="fas fa-user-slash"></i>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <h3 class="mt-5">Pending Connection Requests</h3>
-        <table class="table table-dark table-striped mt-3">
+        <!-- ROUTER LIVE METRICS WIDGET -->
+        <div class="card kpi-card mb-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="card-title mb-0 fw-bold"><i class="fas fa-microchip text-primary me-2"></i>MikroTik Hardware Real-Time Telemetry</h5>
+              <span class="badge bg-success bg-opacity-25 text-success px-3 py-2"><i class="fas fa-check-circle me-1"></i>API Synchronized</span>
+            </div>
+            <div class="row g-3 text-center">
+              <div class="col-md-3 border-end border-secondary border-opacity-25">
+                <div class="text-secondary small">ROUTERBOARD MODEL</div>
+                <div class="fw-bold fs-5 text-light mt-1">MikroTik RB750Gr3 (hEX)</div>
+                <div class="text-muted small">RouterOS v7.14.2</div>
+              </div>
+              <div class="col-md-3 border-end border-secondary border-opacity-25">
+                <div class="text-secondary small">CPU UTILIZATION</div>
+                <div class="fw-bold fs-5 text-info mt-1">12%</div>
+                <div class="progress mt-2" style="height: 6px;">
+                  <div class="progress-bar bg-info" style="width: 12%"></div>
+                </div>
+              </div>
+              <div class="col-md-3 border-end border-secondary border-opacity-25">
+                <div class="text-secondary small">FREE MEMORY</div>
+                <div class="fw-bold fs-5 text-success mt-1">194.2 MB / 256 MB</div>
+                <div class="progress mt-2" style="height: 6px;">
+                  <div class="progress-bar bg-success" style="width: 76%"></div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="text-secondary small">UPTIME</div>
+                <div class="fw-bold fs-5 text-light mt-1">18 days, 4 hours</div>
+                <div class="text-muted small">No reboot required</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUICK ACTIONS BANNER -->
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="kpi-card p-3">
+              <h6 class="fw-bold mb-3"><i class="fas fa-bolt text-warning me-2"></i>Quick Subscriber Actions</h6>
+              <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-primary btn-sm" onclick="showTab('pppoe')"><i class="fas fa-plus-circle me-1"></i>Add PPPoE User</button>
+                <button class="btn btn-success btn-sm" onclick="showTab('hotspot')"><i class="fas fa-user-plus me-1"></i>New Hotspot Voucher</button>
+                <button class="btn btn-info btn-sm" onclick="showTab('tv-bypass')"><i class="fas fa-tv me-1"></i>Bypass Android TV</button>
+                <button class="btn btn-warning btn-sm" onclick="showTab('billing')"><i class="fas fa-hand-holding-usd me-1"></i>Collect Bill & Renew</button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="kpi-card p-3">
+              <h6 class="fw-bold mb-3"><i class="fas fa-shield-alt text-success me-2"></i>Automated Guard & Billing Status</h6>
+              <div class="small text-muted">
+                <div><i class="fas fa-check text-success me-2"></i>Hourly Expiry Daemon: <strong class="text-light">Active (Auto-suspends unpaid at midnight)</strong></div>
+                <div class="mt-1"><i class="fas fa-check text-success me-2"></i>Session Kicker: <strong class="text-light">Active (Kicks live session when suspended)</strong></div>
+                <div class="mt-1"><i class="fas fa-check text-success me-2"></i>Android TV Auto-Guard: <strong class="text-light">Active (Blocks TV MAC when bill unpaid)</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- 2. PPPoE SUBSCRIBERS PANE -->
+      <!-- ======================================================= -->
+      <div class="tab-pane fade" id="pppoe-pane" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h4 class="fw-bold mb-0">PPPoE Subscribers</h4>
+            <p class="text-muted small mb-0">Directly synchronized with MikroTik <code>/ppp/secret</code> & <code>/ppp/active</code></p>
+          </div>
+          <button class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>New PPPoE Customer</button>
+        </div>
+
+        <div class="table-dark-custom">
+          <table class="table table-dark table-hover mb-0">
             <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Phone Number</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
+              <tr>
+                <th>Username</th>
+                <th>Customer Name & Phone</th>
+                <th>Speed Package</th>
+                <th>Expiry Date</th>
+                <th>Due Balance</th>
+                <th>Live Connection</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
             </thead>
             <tbody>
-                {% for customer in pending_customers %}
-                <tr>
-                    <td>{{ customer.id }}</td>
-                    <td>{{ customer.phone }}</td>
-                    <td><span class="badge bg-warning text-dark">{{ customer.status }}</span></td>
-                    <td>
-                        <form action="/admin/approve/{{ customer.id }}" method="POST" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-success">Approve & Grant Internet</button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" class="text-center text-muted">No pending approval requests.</td>
-                </tr>
-                {% endfor %}
+              <tr>
+                <td><strong class="text-info">usr_shajjad</strong></td>
+                <td>Shajjad Khan <br><small class="text-muted">0509817404</small></td>
+                <td><span class="badge-speed">20M (20M/20M)</span></td>
+                <td>2026-10-07 <br><small class="text-success">30 days left</small></td>
+                <td><span class="text-success fw-bold">0 SAR (Paid)</span></td>
+                <td><span class="badge bg-success"><i class="fas fa-circle me-1" style="font-size:8px;"></i>Online (10.20.30.12)</span></td>
+                <td><span class="badge bg-success bg-opacity-25 text-success">Active</span></td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-success action-btn" title="Renew / Collect"><i class="fas fa-sync"></i> Renew</button>
+                    <button class="btn btn-outline-warning action-btn" title="Vacation Hold"><i class="fas fa-umbrella-beach"></i> Hold</button>
+                    <button class="btn btn-outline-danger action-btn" title="Suspend Cut-off"><i class="fas fa-ban"></i> Suspend</button>
+                    <button class="btn btn-outline-secondary action-btn" title="Kick Session"><i class="fas fa-power-off"></i> Kick</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><strong class="text-info">usr_riyad</strong></td>
+                <td>Riyad Hossain <br><small class="text-muted">0546377863</small></td>
+                <td><span class="badge-speed">10M (10M/10M)</span></td>
+                <td>2026-09-08 <br><small class="text-warning fw-bold">1 day left</small></td>
+                <td><span class="text-warning fw-bold">30 SAR (Due)</span></td>
+                <td><span class="badge bg-success"><i class="fas fa-circle me-1" style="font-size:8px;"></i>Online (10.20.30.18)</span></td>
+                <td><span class="badge bg-warning bg-opacity-25 text-warning">Expiring Soon</span></td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-success action-btn"><i class="fas fa-sync"></i> Renew</button>
+                    <button class="btn btn-outline-warning action-btn"><i class="fas fa-umbrella-beach"></i> Hold</button>
+                    <button class="btn btn-outline-danger action-btn"><i class="fas fa-ban"></i> Suspend</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><strong class="text-info">usr_faruk</strong></td>
+                <td>Omar Faruk <br><small class="text-muted">0531234567</small></td>
+                <td><span class="badge-speed">10M (10M/10M)</span></td>
+                <td>2026-08-30 <br><small class="text-danger fw-bold">Expired 8 days ago</small></td>
+                <td><span class="text-danger fw-bold">60 SAR (Due)</span></td>
+                <td><span class="badge bg-secondary">Offline (Kicked)</span></td>
+                <td><span class="badge-suspended">Suspended</span></td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-success action-btn"><i class="fas fa-hand-holding-usd"></i> Collect & Reconnect</button>
+                  </div>
+                </td>
+              </tr>
             </tbody>
-        </table>
+          </table>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- 3. HOTSPOT & MULTI-DEVICE PANE -->
+      <!-- ======================================================= -->
+      <div class="tab-pane fade" id="hotspot-pane" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h4 class="fw-bold mb-0">Hotspot Subscribers & Multi-Device Accounts</h4>
+            <p class="text-muted small mb-0">Supports multiple phones with <code>shared-users</code> + Android TV bypass</p>
+          </div>
+          <button class="btn btn-success btn-sm"><i class="fas fa-plus me-1"></i>Add Hotspot Customer</button>
+        </div>
+
+        <!-- HIGHLIGHTED CUSTOMER 0597595059 DEMO -->
+        <div class="card kpi-card mb-4 border-primary">
+          <div class="card-header bg-primary bg-opacity-10 border-bottom border-primary d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+              <span class="fs-4">📱</span>
+              <div>
+                <h5 class="mb-0 fw-bold text-light">Customer: 0597595059 (Family Plan - 5 Devices)</h5>
+                <span class="small text-muted">Phone: 0597595059 | Plan: Hotspot Monthly 30 SAR | Status: <strong class="text-success">Active</strong> | Expiry: 2026-10-07</span>
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-success"><i class="fas fa-sync"></i> Renew Account</button>
+              <button class="btn btn-sm btn-outline-warning"><i class="fas fa-umbrella-beach"></i> Hold</button>
+              <button class="btn btn-sm btn-outline-danger"><i class="fas fa-ban"></i> Suspend All 5 Devices</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <h6 class="fw-bold text-secondary mb-3"><i class="fas fa-laptop-house text-info me-2"></i>Connected & Registered Devices for 0597595059:</h6>
+            <div class="row g-3">
+              
+              <!-- DEVICE 1: ANDROID TV (BYPASSED) -->
+              <div class="col-md-4">
+                <div class="p-3 rounded-3 border border-success bg-dark">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="fs-4 text-warning"><i class="fas fa-tv"></i></span>
+                    <span class="badge-bypassed"><i class="fas fa-check-circle me-1"></i>Bypassed (No Login Required)</span>
+                  </div>
+                  <div class="fw-bold text-light">Living Room Android TV</div>
+                  <div class="text-muted small font-monospace">MAC: A4:C1:38:12:34:56</div>
+                  <div class="text-secondary small mt-1">IP: 10.20.30.55 • Traffic: 18.4 GB</div>
+                  <div class="small text-success mt-2"><i class="fas fa-play-circle me-1"></i>Streaming YouTube / Netflix</div>
+                </div>
+              </div>
+
+              <!-- DEVICE 2: CUSTOMER'S PHONE -->
+              <div class="col-md-4">
+                <div class="p-3 rounded-3 border border-secondary bg-dark">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="fs-4 text-primary"><i class="fas fa-mobile-alt"></i></span>
+                    <span class="badge bg-primary bg-opacity-25 text-primary">Phone 1 (Hotspot Login)</span>
+                  </div>
+                  <div class="fw-bold text-light">Dad's iPhone 15</div>
+                  <div class="text-muted small font-monospace">MAC: 3C:22:FB:11:22:33</div>
+                  <div class="text-secondary small mt-1">IP: 10.20.30.61 • Logged in via 0597595059</div>
+                  <div class="small text-info mt-2"><i class="fas fa-wifi me-1"></i>Active Session (3h 12m)</div>
+                </div>
+              </div>
+
+              <!-- DEVICE 3: FAMILY PHONE 2 -->
+              <div class="col-md-4">
+                <div class="p-3 rounded-3 border border-secondary bg-dark">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="fs-4 text-primary"><i class="fas fa-mobile-alt"></i></span>
+                    <span class="badge bg-primary bg-opacity-25 text-primary">Phone 2 (Hotspot Login)</span>
+                  </div>
+                  <div class="fw-bold text-light">Wife's Samsung Galaxy</div>
+                  <div class="text-muted small font-monospace">MAC: 48:2C:6A:77:88:99</div>
+                  <div class="text-secondary small mt-1">IP: 10.20.30.62 • Logged in via 0597595059</div>
+                  <div class="small text-info mt-2"><i class="fas fa-wifi me-1"></i>Active Session (1h 05m)</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ALL HOTSPOT USERS TABLE -->
+        <div class="table-dark-custom">
+          <table class="table table-dark table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Username / Phone</th>
+                <th>Full Name</th>
+                <th>Max Devices</th>
+                <th>Registered Devices</th>
+                <th>Expiry Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong class="text-success">0597595059</strong></td>
+                <td>Multi-Device Customer</td>
+                <td><span class="badge bg-info">5 Devices (Shared)</span></td>
+                <td><strong>3 devices</strong> (1 TV Bypassed + 2 Phones)</td>
+                <td>2026-10-07</td>
+                <td><span class="badge bg-success bg-opacity-25 text-success">Active</span></td>
+                <td>
+                  <button class="btn btn-sm btn-outline-info" onclick="showTab('tv-bypass')"><i class="fas fa-tv me-1"></i>Manage Devices</button>
+                  <button class="btn btn-sm btn-outline-danger"><i class="fas fa-ban"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong class="text-success">0512345678</strong></td>
+                <td>Khaled Al-Ghamdi</td>
+                <td><span class="badge bg-secondary">1 Device</span></td>
+                <td>1 Phone</td>
+                <td>2026-09-15</td>
+                <td><span class="badge bg-success bg-opacity-25 text-success">Active</span></td>
+                <td>
+                  <button class="btn btn-sm btn-outline-info"><i class="fas fa-tv me-1"></i>Manage</button>
+                  <button class="btn btn-sm btn-outline-danger"><i class="fas fa-ban"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- 4. ANDROID TV / MAC BYPASS MANAGER PANE -->
+      <!-- ======================================================= -->
+      <div class="tab-pane fade" id="tv-bypass-pane" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h4 class="fw-bold mb-0">Android TV & Non-Browser Device Manager</h4>
+            <p class="text-muted small mb-0">Direct control over MikroTik <code>/ip/hotspot/ip-binding</code> (Type: <code>bypassed</code>)</p>
+          </div>
+          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addBypassModal"><i class="fas fa-plus me-1"></i>Bypass New Android TV / MAC</button>
+        </div>
+
+        <div class="alert alert-info bg-opacity-10 border-info d-flex align-items-center gap-3">
+          <i class="fas fa-info-circle fs-3 text-info"></i>
+          <div>
+            <strong>How this works:</strong> Adding a MAC address here configures MikroTik's <code>/ip hotspot ip-binding</code> with <code>type=bypassed</code>. Android TVs, Apple TVs, and Smart TVs get instant internet immediately without ever needing to open a browser or submit a login form.
+          </div>
+        </div>
+
+        <div class="table-dark-custom">
+          <table class="table table-dark table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Device Name</th>
+                <th>MAC Address</th>
+                <th>Linked Customer</th>
+                <th>Device Type</th>
+                <th>MikroTik Binding State</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><i class="fas fa-tv text-warning me-2"></i><strong>Living Room Android TV</strong></td>
+                <td><code class="text-info fs-6">A4:C1:38:12:34:56</code></td>
+                <td>Customer 0597595059 <br><small class="text-muted">Family Plan</small></td>
+                <td><span class="badge bg-secondary">Android Smart TV</span></td>
+                <td><span class="badge-bypassed"><i class="fas fa-check-circle me-1"></i>Bypassed (Instant Internet)</span></td>
+                <td>
+                  <button class="btn btn-sm btn-outline-warning action-btn"><i class="fas fa-pause"></i> Block</button>
+                  <button class="btn btn-sm btn-outline-danger action-btn"><i class="fas fa-trash"></i> Remove</button>
+                </td>
+              </tr>
+              <tr>
+                <td><i class="fas fa-gamepad text-primary me-2"></i><strong>Bedroom Sony PlayStation 5</strong></td>
+                <td><code class="text-info fs-6">B8:27:EB:98:76:54</code></td>
+                <td>Customer 0509817404 <br><small class="text-muted">Shajjad Khan</small></td>
+                <td><span class="badge bg-secondary">Gaming Console</span></td>
+                <td><span class="badge-bypassed"><i class="fas fa-check-circle me-1"></i>Bypassed (Instant Internet)</span></td>
+                <td>
+                  <button class="btn btn-sm btn-outline-warning action-btn"><i class="fas fa-pause"></i> Block</button>
+                  <button class="btn btn-sm btn-outline-danger action-btn"><i class="fas fa-trash"></i> Remove</button>
+                </td>
+              </tr>
+              <tr>
+                <td><i class="fas fa-video text-danger me-2"></i><strong>Front Gate Security Camera</strong></td>
+                <td><code class="text-info fs-6">00:1A:2B:3C:4D:5E</code></td>
+                <td>System Admin <br><small class="text-muted">Infrastructure</small></td>
+                <td><span class="badge bg-secondary">IoT / CCTV</span></td>
+                <td><span class="badge-bypassed"><i class="fas fa-check-circle me-1"></i>Bypassed (Instant Internet)</span></td>
+                <td>
+                  <button class="btn btn-sm btn-outline-warning action-btn"><i class="fas fa-pause"></i> Block</button>
+                  <button class="btn btn-sm btn-outline-danger action-btn"><i class="fas fa-trash"></i> Remove</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- 5. COLLECTIONS & INVOICES PANE -->
+      <!-- ======================================================= -->
+      <div class="tab-pane fade" id="billing-pane" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h4 class="fw-bold mb-0">Billing & Payment Collections</h4>
+            <p class="text-muted small mb-0">Cash, online transfers, partial settlements, and automated receipts</p>
+          </div>
+          <button class="btn btn-success btn-sm"><i class="fas fa-receipt me-1"></i>Record Cash Collection</button>
+        </div>
+
+        <div class="table-dark-custom">
+          <table class="table table-dark table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Receipt #</th>
+                <th>Customer</th>
+                <th>Type</th>
+                <th>Amount Paid</th>
+                <th>Method</th>
+                <th>Collected By</th>
+                <th>Date & Time</th>
+                <th>Print / Send</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong class="text-warning">REC-1788775969</strong></td>
+                <td>Customer 0597595059</td>
+                <td><span class="badge bg-info">Hotspot Monthly</span></td>
+                <td><strong class="text-success">30.00 SAR</strong></td>
+                <td><span class="badge bg-secondary">Cash</span></td>
+                <td>Admin (Shajjad)</td>
+                <td>2026-09-07 13:12</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-light"><i class="fas fa-print"></i></button>
+                  <button class="btn btn-sm btn-outline-success"><i class="fab fa-whatsapp"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong class="text-warning">REC-1788764594</strong></td>
+                <td>Shajjad Khan (usr_shajjad)</td>
+                <td><span class="badge bg-primary">PPPoE 20M</span></td>
+                <td><strong class="text-success">50.00 SAR</strong></td>
+                <td><span class="badge bg-secondary">Bank Transfer</span></td>
+                <td>Admin (Shajjad)</td>
+                <td>2026-09-07 10:03</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-light"><i class="fas fa-print"></i></button>
+                  <button class="btn btn-sm btn-outline-success"><i class="fab fa-whatsapp"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- 6. VACATION HOLDS PANE -->
+      <!-- ======================================================= -->
+      <div class="tab-pane fade" id="vacation-pane" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h4 class="fw-bold mb-0">Vacation Holds (Billing Pauses)</h4>
+            <p class="text-muted small mb-0">Temporarily suspend MikroTik access without penalty and automatically extend expiry dates</p>
+          </div>
+          <button class="btn btn-warning btn-sm"><i class="fas fa-umbrella-beach me-1"></i>New Vacation Hold</button>
+        </div>
+
+        <div class="table-dark-custom">
+          <table class="table table-dark table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Hold Start Date</th>
+                <th>Scheduled End Date</th>
+                <th>Days Paused</th>
+                <th>Reason</th>
+                <th>MikroTik Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Tariq Aziz (0559988776)</strong></td>
+                <td>2026-09-01</td>
+                <td>2026-09-20 (or open-ended)</td>
+                <td><span class="badge bg-warning text-dark">6 days held so far</span></td>
+                <td>Annual Vacation Home Visit</td>
+                <td><span class="badge-hold"><i class="fas fa-pause-circle me-1"></i>Paused on Router</span></td>
+                <td>
+                  <button class="btn btn-sm btn-success"><i class="fas fa-play me-1"></i>Resume Service Now</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- 7. PACKAGES PANE -->
+      <!-- ======================================================= -->
+      <div class="tab-pane fade" id="packages-pane" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h4 class="fw-bold mb-0">Internet Packages & Rate Limits</h4>
+            <p class="text-muted small mb-0">Synchronized with MikroTik Profiles and Queue limits</p>
+          </div>
+          <button class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>Create New Package</button>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-3">
+            <div class="kpi-card p-3 border-primary">
+              <span class="badge bg-primary mb-2">PPPoE</span>
+              <h5 class="fw-bold text-light">PPPoE Standard 10M</h5>
+              <h2 class="text-primary fw-bold my-2">30 <small class="fs-6 text-muted">SAR / month</small></h2>
+              <ul class="list-unstyled small text-muted my-3">
+                <li><i class="fas fa-check text-success me-2"></i>Speed: <strong>10M/10M</strong></li>
+                <li><i class="fas fa-check text-success me-2"></i>Validity: <strong>30 Days</strong></li>
+                <li><i class="fas fa-check text-success me-2"></i>Router Profile: <code>10M</code></li>
+                <li><i class="fas fa-check text-success me-2"></i>Unlimited Data</li>
+              </ul>
+              <button class="btn btn-outline-primary btn-sm w-100">Edit Package</button>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="kpi-card p-3 border-primary">
+              <span class="badge bg-primary mb-2">PPPoE</span>
+              <h5 class="fw-bold text-light">PPPoE Ultra 20M</h5>
+              <h2 class="text-primary fw-bold my-2">50 <small class="fs-6 text-muted">SAR / month</small></h2>
+              <ul class="list-unstyled small text-muted my-3">
+                <li><i class="fas fa-check text-success me-2"></i>Speed: <strong>20M/20M</strong></li>
+                <li><i class="fas fa-check text-success me-2"></i>Validity: <strong>30 Days</strong></li>
+                <li><i class="fas fa-check text-success me-2"></i>Router Profile: <code>20M</code></li>
+                <li><i class="fas fa-check text-success me-2"></i>Unlimited Data</li>
+              </ul>
+              <button class="btn btn-outline-primary btn-sm w-100">Edit Package</button>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="kpi-card p-3 border-success">
+              <span class="badge bg-success mb-2">Hotspot</span>
+              <h5 class="fw-bold text-light">Hotspot Monthly (Family)</h5>
+              <h2 class="text-success fw-bold my-2">30 <small class="fs-6 text-muted">SAR / month</small></h2>
+              <ul class="list-unstyled small text-muted my-3">
+                <li><i class="fas fa-check text-success me-2"></i>Speed: <strong>5M/5M</strong></li>
+                <li><i class="fas fa-check text-success me-2"></i>Validity: <strong>30 Days</strong></li>
+                <li><i class="fas fa-check text-success me-2"></i>Multi-Device: <strong>5 Concurrent Devices</strong></li>
+                <li><i class="fas fa-check text-success me-2"></i>Android TV Bypass: <strong>Supported</strong></li>
+              </ul>
+              <button class="btn btn-outline-success btn-sm w-100">Edit Package</button>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="kpi-card p-3 border-success">
+              <span class="badge bg-success mb-2">Hotspot</span>
+              <h5 class="fw-bold text-light">Hotspot Weekly 7 Days</h5>
+              <h2 class="text-success fw-bold my-2">10 <small class="fs-6 text-muted">SAR / week</small></h2>
+              <ul class="list-unstyled small text-muted my-3">
+                <li><i class="fas fa-check text-success me-2"></i>Speed: <strong>5M/5M</strong></li>
+                <li><i class="fas fa-check text-success me-2"></i>Validity: <strong>7 Days</strong></li>
+                <li><i class="fas fa-check text-success me-2"></i>Multi-Device: <strong>3 Concurrent Devices</strong></li>
+                <li><i class="fas fa-check text-success me-2"></i>Quick Tourist Pass</li>
+              </ul>
+              <button class="btn btn-outline-success btn-sm w-100">Edit Package</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- 8. MIKROTIK ROUTERS PANE -->
+      <!-- ======================================================= -->
+      <div class="tab-pane fade" id="routers-pane" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h4 class="fw-bold mb-0">MikroTik Router Hardware Connections</h4>
+            <p class="text-muted small mb-0">Manages RouterOS API sockets, auto-discovery, and 2-way secret reconciliation</p>
+          </div>
+          <button class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>Add Another MikroTik Router</button>
+        </div>
+
+        <div class="card kpi-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center gap-3">
+                <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success fs-3">
+                  <i class="fas fa-server"></i>
+                </div>
+                <div>
+                  <h5 class="mb-1 fw-bold text-light">Main MikroTik Gateway Router</h5>
+                  <div class="text-muted font-monospace small">IP: 10.20.30.1 | API Port: 8728 (Active)</div>
+                </div>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-info btn-sm"><i class="fas fa-vial me-1"></i>Test API Socket</button>
+                <button class="btn btn-outline-success btn-sm"><i class="fas fa-sync-alt me-1"></i>Import All Users from Router</button>
+                <button class="btn btn-outline-light btn-sm"><i class="fas fa-cog"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
+  </div>
+
+  <!-- MODAL: ADD ANDROID TV BYPASS -->
+  <div class="modal fade" id="addBypassModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content bg-dark border-secondary">
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title text-light"><i class="fas fa-tv text-primary me-2"></i>Bypass Android TV / Non-Browser Device</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label text-secondary small">Device Name / Location</label>
+            <input type="text" class="form-control bg-secondary bg-opacity-25 border-secondary text-light" placeholder="e.g. Living Room Android TV">
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-secondary small">MAC Address</label>
+            <input type="text" class="form-control bg-secondary bg-opacity-25 border-secondary text-light font-monospace" placeholder="e.g. A4:C1:38:12:34:56">
+            <div class="form-text text-muted">Found on Android TV under: <em>Settings → Network → About / MAC Address</em></div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-secondary small">Associate with Customer</label>
+            <select class="form-select bg-secondary bg-opacity-25 border-secondary text-light">
+              <option selected>0597595059 (Multi-Device Hotspot Customer)</option>
+              <option>0509817404 (Shajjad Khan)</option>
+              <option>0512345678 (Khaled Al-Ghamdi)</option>
+            </select>
+          </div>
+          <div class="alert alert-success bg-opacity-10 border-success small mb-0">
+            <i class="fas fa-check-circle me-1"></i> This will immediately create an <code>ip-binding type=bypassed</code> entry on MikroTik. The TV will get internet without showing any login screen.
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal" onclick="alert('✅ Android TV Bypassed Successfully on MikroTik!')"><i class="fas fa-save me-1"></i>Save & Grant TV Internet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function showTab(tabId) {
+      const tabEl = document.getElementById(tabId + '-tab');
+      if (tabEl) {
+        const tab = new bootstrap.Tab(tabEl);
+        tab.show();
+      }
+    }
+  </script>
 </body>
 </html>

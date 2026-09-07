@@ -1,40 +1,59 @@
+from pathlib import Path
 from fastapi import FastAPI, Request, Depends, Form
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from database import engine, Base, get_db
-from models import Customer
 
-Base.metadata.create_all(bind=engine)
+from app.database import engine, Base, get_db, init_db
+from app.models import (
+    User, Router, Package, Subscriber, SubscriberDevice,
+    Invoice, Payment, VacationHold, AuditLog
+)
 
-app = FastAPI(title="CyberNet ISP System V2")
-templates = Jinja2Templates(directory="templates")
+# Initialize schema and seed data
+init_db()
+
+app = FastAPI(title="CyberNet ISP Billing & MikroTik Management")
+
+BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 @app.get("/")
 def dashboard(request: Request, db: Session = Depends(get_db)):
-    total_customers = db.query(Customer).count()
-    active_customers = db.query(Customer).filter(Customer.status == "active").count()
-    pending_customers = db.query(Customer).filter(Customer.status == "pending").all()
+    total_customers = db.query(Subscriber).count()
+    active_customers = db.query(Subscriber).filter(Subscriber.status == "active").count()
+    packages = db.query(Package).all()
+    routers = db.query(Router).all()
+    devices = db.query(SubscriberDevice).all()
         
     return templates.TemplateResponse(
-        request, 
-        "dashboard.html", 
-        {
+        request=request,
+        name="dashboard.html",
+        context={
             "total_customers": total_customers,
             "active_customers": active_customers,
-            "pending_customers": pending_customers
+            "packages": packages,
+            "routers": routers,
+            "devices": devices
         }
     )
 
 @app.get("/hotspot/login")
 def hotspot_login_page(request: Request):
-    return templates.TemplateResponse(request, "login.html", {})
+    return templates.TemplateResponse(request=request, name="login.html", context={})
 
 @app.post("/hotspot/submit")
 def hotspot_submit(phone: str = Form(...), db: Session = Depends(get_db)):
-    customer = db.query(Customer).filter(Customer.phone == phone).first()
+    customer = db.query(Subscriber).filter(Subscriber.phone == phone).first()
     if not customer:
-        customer = Customer(phone=phone, name="Hotspot User", status="pending")
+        customer = Subscriber(
+            phone=phone,
+            username=phone,
+            password="pin_" + phone[-4:],
+            fullname="Hotspot User",
+            type="hotspot",
+            status="pending"
+        )
         db.add(customer)
         db.commit()
     
@@ -42,4 +61,4 @@ def hotspot_submit(phone: str = Form(...), db: Session = Depends(get_db)):
 
 @app.get("/hotspot/pending")
 def hotspot_pending(request: Request, phone: str):
-    return templates.TemplateResponse(request, "pending.html", {"phone": phone})
+    return templates.TemplateResponse(request=request, name="pending.html", context={"phone": phone})
