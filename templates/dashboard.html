@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberNet ISP | Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-body text-body">
+    <nav class="navbar navbar-dark bg-dark border-bottom">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">🌐 CyberNet ISP Management</a>
+        </div>
+    </nav>
+    <div class="container mt-4">
+        <h2 class="mb-4">System Dashboard</h2>
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card text-bg-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Customers</h5>
+                        <h2 class="card-text">{{ total_customers }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Active Customers</h5>
+                        <h2 class="card-text">{{ active_customers }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-bg-warning">
+                    <div class="card-body">
+                        <h5 class="card-title">Pending Approvals</h5>
+                        <h2 class="card-text">{{ pending_customers|length }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="mt-5">Pending Connection Requests</h3>
+        <table class="table table-dark table-striped mt-3">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Phone Number</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in pending_customers %}
+                <tr>
+                    <td>{{ customer.id }}</td>
+                    <td>{{ customer.phone }}</td>
+                    <td><span class="badge bg-warning text-dark">{{ customer.status }}</span></td>
+                    <td>
+                        <form action="/admin/approve/{{ customer.id }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-success">Approve & Grant Internet</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">No pending approval requests.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberNet Hotspot | Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-body text-body d-flex align-items-center py-4 bg-dark" style="height: 100vh;">
+    <div class="container text-center" style="max-width: 400px;">
+        <div class="card p-4 shadow bg-secondary text-white">
+            <h3 class="mb-3">🌐 CyberNet WiFi</h3>
+            <p class="text-light">Enter your phone number to connect.</p>
+            <form action="/hotspot/submit" method="POST">
+                <div class="mb-3">
+                    <input type="text" name="phone" class="form-control" placeholder="Phone Number" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Connect</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
