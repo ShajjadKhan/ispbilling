@@ -1,206 +1,237 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CyberNet High-Speed Hotspot</title>
+  <title>CyberNet Hotspot WiFi | High-Speed Internet</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg-gradient: linear-gradient(135deg, #0b1120 0%, #172554 50%, #0b1120 100%);
-      --card-bg: rgba(255, 255, 255, 0.05);
-      --card-border: rgba(255, 255, 255, 0.12);
+      --bg: #0b1120;
+      --card-bg: rgba(15, 23, 42, 0.9);
+      --card-border: rgba(255, 255, 255, 0.14);
       --primary: #3b82f6;
       --primary-hover: #2563eb;
-      --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-      --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-      --text-main: #f8fafc;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #f8fafc;
       --text-muted: #94a3b8;
     }
     body {
       min-height: 100vh;
-      background: var(--bg-gradient);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      color: var(--text-main);
+      width: 100%;
+      background: radial-gradient(circle at top center, #1e293b 0%, #0b1120 70%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 16px;
+      margin: 0;
+      overflow-x: hidden;
     }
-    .portal-container {
+    .portal-card {
       width: 100%;
-      max-width: 420px;
+      max-width: 360px;
+      margin: auto;
       background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--card-border);
       border-radius: 24px;
-      padding: 32px 24px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      padding: 28px 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
       text-align: center;
-      position: relative;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
-    .brand-icon {
-      width: 68px;
-      height: 68px;
-      background: var(--primary-gradient);
-      border-radius: 20px;
+    .brand-icon-wrapper {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px auto;
+      box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+    }
+    .brand-icon-wrapper svg {
+      width: 34px;
+      height: 34px;
+      fill: #ffffff;
+    }
+    .brand-badge {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 20px;
-      box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
-    }
-    .brand-icon svg {
-      width: 36px;
-      height: 36px;
-      fill: #ffffff;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      margin: 0 auto 18px auto;
     }
     h1 {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 800;
-      letter-spacing: -0.02em;
       margin-bottom: 6px;
       color: #ffffff;
+      letter-spacing: -0.01em;
     }
     .subtitle {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-muted);
-      margin-bottom: 24px;
       line-height: 1.5;
+      margin-bottom: 22px;
     }
     .form-group {
       text-align: left;
       margin-bottom: 18px;
     }
     .form-label {
-      display: block;
+      display: flex;
+      justify-content: space-between;
       font-size: 12px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
+      color: #cbd5e1;
       margin-bottom: 8px;
     }
-    .input-wrapper {
+    .input-box {
       position: relative;
+      display: flex;
+      align-items: center;
     }
     .input-icon {
       position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 20px;
-      height: 20px;
+      left: 14px;
+      width: 18px;
+      height: 18px;
       fill: #64748b;
+      pointer-events: none;
     }
-    .form-control {
+    .form-input {
       width: 100%;
-      background: rgba(15, 23, 42, 0.6);
-      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1.5px solid rgba(255, 255, 255, 0.18);
       border-radius: 14px;
-      padding: 14px 16px 14px 46px;
+      padding: 13px 14px 13px 42px;
+      color: #ffffff;
       font-size: 16px;
       font-weight: 600;
-      color: #ffffff;
+      font-family: inherit;
       outline: none;
       transition: all 0.2s ease;
+      letter-spacing: 0.02em;
     }
-    .form-control:focus {
+    .form-input:focus {
       border-color: #3b82f6;
-      background: rgba(15, 23, 42, 0.9);
-      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+      background: #0f172a;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
     }
-    .form-control::placeholder {
-      color: #64748b;
+    .form-input::placeholder {
+      color: #475569;
       font-weight: 400;
     }
-    .btn {
+    .btn-submit {
       width: 100%;
-      padding: 15px;
-      background: var(--primary-gradient);
-      color: #ffffff;
-      font-size: 16px;
-      font-weight: 700;
-      border: none;
+      padding: 14px;
       border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: #ffffff;
+      font-size: 15.5px;
+      font-weight: 700;
+      font-family: inherit;
       cursor: pointer;
-      box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4);
-      transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4);
+      transition: all 0.2s;
     }
-    .btn:hover {
+    .btn-submit:hover {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
       transform: translateY(-1px);
-      box-shadow: 0 12px 24px -5px rgba(59, 130, 246, 0.6);
     }
-    .btn:active {
+    .btn-submit:active {
       transform: translateY(1px);
     }
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
     .btn-secondary {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: none;
+      width: 100%;
+      padding: 11px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.06);
+      color: #e2e8f0;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
       margin-top: 10px;
+      transition: all 0.2s;
     }
     .btn-secondary:hover {
       background: rgba(255, 255, 255, 0.12);
-      box-shadow: none;
     }
-    .alert-box {
-      border-radius: 14px;
-      padding: 14px 16px;
+    .alert-banner {
+      border-radius: 12px;
+      padding: 11px 14px;
       font-size: 13px;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       text-align: left;
-      line-height: 1.5;
+      line-height: 1.45;
     }
     .alert-danger {
       background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      border: 1px solid rgba(239, 68, 68, 0.35);
       color: #fca5a5;
     }
     .alert-warning {
       background: rgba(245, 158, 11, 0.15);
-      border: 1px solid rgba(245, 158, 11, 0.3);
+      border: 1px solid rgba(245, 158, 11, 0.35);
       color: #fde68a;
     }
     .alert-success {
       background: rgba(16, 185, 129, 0.15);
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      border: 1px solid rgba(16, 185, 129, 0.35);
       color: #a7f3d0;
     }
-    .meta-info {
-      margin-top: 24px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      font-size: 11px;
-      color: #64748b;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    }
-    .spinner {
+    .spinner-ring {
       width: 44px;
       height: 44px;
       border: 3.5px solid rgba(255, 255, 255, 0.15);
       border-top-color: #3b82f6;
       border-radius: 50%;
-      animation: spin 0.9s linear infinite;
-      margin: 20px auto;
+      animation: spin 0.85s linear infinite;
+      margin: 18px auto;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .footer-meta {
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 11px;
+      color: #64748b;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      line-height: 1.5;
     }
-    .badge-tag {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 9999px;
+    .test-banner {
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px dashed rgba(59, 130, 246, 0.4);
+      border-radius: 12px;
+      padding: 8px 12px;
       font-size: 12px;
-      font-weight: 700;
-      background: rgba(59, 130, 246, 0.2);
-      color: #60a5fa;
+      color: #93c5fd;
       margin-bottom: 16px;
     }
     .d-none { display: none !important; }
@@ -208,34 +239,45 @@
 </head>
 <body>
 
-<div class="portal-container">
-  <!-- Brand Header -->
-  <div class="brand-icon">
-    <svg viewBox="0 0 24 24">
-      <path d="M12 3C7.03 3 2.62 5.08.13 8.44c-.21.28-.19.67.06.92l2.36 2.36c.26.26.69.27.96.02C5.55 9.87 8.6 8.75 12 8.75s6.45 1.12 8.49 2.99c.27.25.7.24.96-.02l2.36-2.36c.25-.25.27-.64.06-.92C21.38 5.08 16.97 3 12 3zm0 6c-3.31 0-6.27 1.39-8.36 3.63-.26.28-.24.71.04.97l2.36 2.24c.27.25.69.23.94-.03C8.42 14.48 10.11 13.75 12 13.75s3.58.73 5.02 2.06c.25.26.67.28.94.03l2.36-2.24c.28-.26.3-.69.04-.97C18.27 10.39 15.31 9 12 9zm0 6c-1.66 0-3.14.71-4.22 1.83-.26.27-.24.7.04.97l3.47 3.32c.39.37 1.02.37 1.41 0l3.48-3.32c.28-.27.3-.7.04-.97C15.14 15.71 13.66 15 12 15z"/>
-    </svg>
+<div class="portal-card">
+  
+  <!-- WiFi Icon & Brand Badge -->
+  <div style="text-align: center;">
+    <div class="brand-icon-wrapper">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 3C7.03 3 2.62 5.08.13 8.44c-.21.28-.19.67.06.92l2.36 2.36c.26.26.69.27.96.02C5.55 9.87 8.6 8.75 12 8.75s6.45 1.12 8.49 2.99c.27.25.7.24.96-.02l2.36-2.36c.25-.25.27-.64.06-.92C21.38 5.08 16.97 3 12 3zm0 6c-3.31 0-6.27 1.39-8.36 3.63-.26.28-.24.71.04.97l2.36 2.24c.27.25.69.23.94-.03C8.42 14.48 10.11 13.75 12 13.75s3.58.73 5.02 2.06c.25.26.67.28.94.03l2.36-2.24c.28-.26.3-.69.04-.97C18.27 10.39 15.31 9 12 9zm0 6c-1.66 0-3.14.71-4.22 1.83-.26.27-.24.7.04.97l3.47 3.32c.39.37 1.02.37 1.41 0l3.48-3.32c.28-.27.3-.7.04-.97C15.14 15.71 13.66 15 12 15z"/>
+      </svg>
+    </div>
+    <div>
+      <span class="brand-badge">CYBERNET HIGH-SPEED HOTSPOT</span>
+    </div>
   </div>
 
-  <div class="badge-tag">CyberNet High-Speed WiFi</div>
+  <div id="testNotice" class="test-banner d-none">
+    <strong>Browser Test Mode:</strong> Enter mobile number to test registration.
+  </div>
 
-  <!-- STEP 1: Phone Submission View -->
+  <div id="errorAlert" class="alert-banner alert-danger d-none"></div>
+
+  <!-- VIEW 1: PHONE SUBMISSION -->
   <div id="viewStep1">
-    <h1>Connect to Hotspot</h1>
-    <p class="subtitle">Enter your mobile phone number to request or resume your high-speed internet access.</p>
+    <h1>Connect to WiFi</h1>
+    <p class="subtitle">Enter your mobile phone number to activate or resume your high-speed internet access.</p>
 
-    <div id="errorBox" class="alert-box alert-danger d-none"></div>
-
-    <form id="hotspotForm" onsubmit="handlePhoneSubmit(event)">
+    <form id="phoneForm" onsubmit="handlePhoneSubmit(event)">
       <div class="form-group">
-        <label class="form-label">Phone Number / رقم الجوال</label>
-        <div class="input-wrapper">
+        <label class="form-label">
+          <span>Mobile Number / رقم الجوال</span>
+          <span style="color:#60a5fa;">05xxxxxxxx</span>
+        </label>
+        <div class="input-box">
           <svg class="input-icon" viewBox="0 0 24 24">
             <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
           </svg>
           <input 
             type="tel" 
-            id="inputPhone" 
-            class="form-control" 
+            id="userPhone" 
+            class="form-input" 
             placeholder="0597595059" 
             inputmode="numeric" 
             autocomplete="tel" 
@@ -245,7 +287,7 @@
         </div>
       </div>
 
-      <button type="submit" id="btnSubmit" class="btn">
+      <button type="submit" id="btnSubmit" class="btn-submit">
         <span>Connect to Internet</span>
         <svg style="width:18px;height:18px;fill:currentColor" viewBox="0 0 24 24">
           <path d="M5 13h11.86l-5.43 5.43 1.42 1.42L21.14 12l-8.29-7.85-1.42 1.42L16.86 11H5v2z"/>
@@ -254,132 +296,138 @@
     </form>
 
     <p style="font-size:12px; color:#64748b; margin-top:16px; line-height:1.5;">
-      Supports multiple phones & devices under one account. For Android TV bypass, contact the network administrator.
+      Allows up to 5 devices per subscriber account. For smart devices without a screen (Android TV), contact admin.
     </p>
   </div>
 
-  <!-- STEP 2: Pending Approval / Waiting View -->
+  <!-- VIEW 2: WAITING FOR APPROVAL -->
   <div id="viewStep2" class="d-none">
-    <h1 style="color:#fbbf24;">Request Sent!</h1>
-    <p class="subtitle">Your mobile number <strong id="displayPhone" style="color:#ffffff;"></strong> has been registered.</p>
+    <h1 style="color:#fbbf24;">Request Submitted!</h1>
+    <p class="subtitle">Mobile: <strong id="lblPendingPhone" style="color:#ffffff;"></strong></p>
 
-    <div class="alert-box alert-warning">
-      <div style="font-weight:700; margin-bottom:4px;">Waiting for Admin Activation</div>
-      <div>Please contact the network administrator or pay your subscription fee to activate your plan.</div>
+    <div class="alert-banner alert-warning">
+      <div style="font-weight:700; margin-bottom:4px;">Waiting for Administrator Approval</div>
+      <div>Your request has been received. Please contact admin to activate your plan.</div>
     </div>
 
-    <div class="spinner"></div>
-    <div id="pollingStatus" style="font-size:13px; color:#94a3b8; margin-bottom:18px;">
+    <div class="spinner-ring"></div>
+    <p id="txtPolling" style="font-size:13px; color:#94a3b8; margin-bottom:16px;">
       Checking activation status every 5 seconds...
-    </div>
+    </p>
 
-    <button onclick="checkStatusNow()" class="btn btn-secondary">
+    <button onclick="pollStatusNow()" class="btn-secondary">
       <span>Check Status Now</span>
     </button>
-    <button onclick="goBack()" class="btn btn-secondary" style="margin-top:6px;">
+    <button onclick="changeNumber()" class="btn-secondary">
       <span>Change Phone Number</span>
     </button>
   </div>
 
-  <!-- STEP 3: Approved & Connected View -->
+  <!-- VIEW 3: APPROVED & ONLINE -->
   <div id="viewStep3" class="d-none">
-    <div style="width:68px; height:68px; background:var(--success-gradient); border-radius:50%; margin:0 auto 20px; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 25px rgba(16,185,129,0.4);">
-      <svg style="width:36px; height:36px; fill:#fff;" viewBox="0 0 24 24">
+    <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg, #10b981 0%, #059669 100%); margin:0 auto 16px; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 25px rgba(16,185,129,0.4);">
+      <svg style="width:34px; height:34px; fill:#ffffff;" viewBox="0 0 24 24">
         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
       </svg>
     </div>
-    <h1 style="color:#34d399;">Internet Activated!</h1>
-    <p class="subtitle" id="approvedMsg">Your device is authorized. Enjoy high-speed internet.</p>
 
-    <div class="alert-box alert-success" id="expiryInfoBox">
-      Access valid and active.
+    <h1 style="color:#34d399;">Internet Connected!</h1>
+    <p class="subtitle" id="txtApprovedMsg">Your device is authorized on CyberNet Hotspot.</p>
+
+    <div class="alert-banner alert-success" id="boxExpiry">
+      Plan is active and ready.
     </div>
 
-    <button onclick="finishLogin()" class="btn" style="background:var(--success-gradient);">
+    <button onclick="finishLogin()" class="btn-submit" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%);">
       <span>Start Browsing</span>
+      <svg style="width:18px;height:18px;fill:currentColor" viewBox="0 0 24 24">
+        <path d="M5 13h11.86l-5.43 5.43 1.42 1.42L21.14 12l-8.29-7.85-1.42 1.42L16.86 11H5v2z"/>
+      </svg>
     </button>
   </div>
 
-  <!-- Hardware Details (MikroTik dynamic variables) -->
-  <div class="meta-info">
-    <div>DEVICE MAC: <span id="lblMac">$(mac)</span></div>
-    <div>DEVICE IP: <span id="lblIp">$(ip)</span></div>
+  <!-- Hardware Details (MikroTik RouterOS Variables) -->
+  <div class="footer-meta">
+    <div>DEVICE MAC: <span id="lblMacVal">$(mac)</span></div>
+    <div>DEVICE IP: <span id="lblIpVal">$(ip)</span></div>
   </div>
+
 </div>
 
-<!-- MikroTik Native Login Form (used to finalize hotspot session) -->
-<form id="mikrotikLoginForm" name="login" action="$(link-login-only)" method="post" style="display:none;">
-  <input type="hidden" name="username" id="mkUser" value="$(mac)">
-  <input type="hidden" name="password" id="mkPass" value="">
+<!-- MikroTik RouterOS Native Form Submission -->
+<form id="nativeLoginForm" name="login" action="$(link-login-only)" method="post" style="display:none;">
+  <input type="hidden" name="username" id="nativeUser" value="$(mac)">
+  <input type="hidden" name="password" id="nativePass" value="">
   <input type="hidden" name="dst" value="$(link-orig)">
   <input type="hidden" name="popup" value="true">
 </form>
 
 <script>
-  // Dynamic MikroTik Variables (interpolated by RouterOS)
-  var CLIENT_MAC = "$(mac)";
-  var CLIENT_IP  = "$(ip)";
-  var ORIG_URL   = "$(link-orig)";
+  var ROUTER_MAC = "$(mac)";
+  var ROUTER_IP  = "$(ip)";
+  var DEST_URL   = "$(link-orig)";
 
-  // If testing outside MikroTik router, assign placeholders
-  if (CLIENT_MAC.indexOf("$(") === 0) {
-    CLIENT_MAC = "00:11:22:33:44:55";
-    CLIENT_IP = "10.20.30.125";
+  var isSimulated = false;
+  if (ROUTER_MAC.indexOf("$(") === 0) {
+    isSimulated = true;
+    ROUTER_MAC = "AUTO_DETECTED";
+    ROUTER_IP = "10.20.30.X";
+    document.getElementById("testNotice").classList.remove("d-none");
   }
 
-  document.getElementById("lblMac").textContent = CLIENT_MAC;
-  document.getElementById("lblIp").textContent = CLIENT_IP;
+  document.getElementById("lblMacVal").textContent = ROUTER_MAC;
+  document.getElementById("lblIpVal").textContent = ROUTER_IP;
 
-  // Portal API Server Location: points to billing host
-  var API_HOST = window.location.origin;
-  // If loaded directly from MikroTik router storage (e.g. 10.20.30.1 or 192.168.88.1), point to tserver
-  if (window.location.hostname === "10.20.30.1" || window.location.port !== "8088") {
-    API_HOST = "http://10.20.30.40:8088";
+  var API_BASE = window.location.origin;
+  if (window.location.hostname === "10.20.30.1" || (window.location.port !== "8088" && window.location.hostname !== "localhost")) {
+    API_BASE = "http://10.20.30.40:8088";
   }
 
-  var pollTimer = null;
-  var currentPhone = "";
+  var poller = null;
+  var submittedPhone = "";
 
   function showError(msg) {
-    var b = document.getElementById("errorBox");
+    var b = document.getElementById("errorAlert");
     b.textContent = msg;
     b.classList.remove("d-none");
   }
 
   function hideError() {
-    document.getElementById("errorBox").classList.add("d-none");
+    document.getElementById("errorAlert").classList.add("d-none");
   }
 
   function handlePhoneSubmit(e) {
     e.preventDefault();
     hideError();
 
-    var rawPhone = document.getElementById("inputPhone").value.trim();
-    var cleanPhone = rawPhone.replace(/\D/g, "");
+    var raw = document.getElementById("userPhone").value.trim();
+    var clean = raw.replace(/\D/g, "");
 
-    if (cleanPhone.length < 9) {
-      showError("Please enter a valid mobile number (e.g. 0597595059).");
+    if (clean.length < 9) {
+      showError("Please enter a valid phone number (at least 9 digits).");
       return;
     }
 
-    currentPhone = cleanPhone;
+    submittedPhone = clean;
     var btn = document.getElementById("btnSubmit");
     btn.disabled = true;
-    btn.innerHTML = "<span>Checking...</span>";
+    btn.innerHTML = "<span>Connecting...</span>";
+
+    var macToSend = isSimulated ? ("TEST:" + clean.slice(-8)) : ROUTER_MAC;
 
     var payload = {
-      phone: cleanPhone,
-      mac: CLIENT_MAC,
-      ip: CLIENT_IP,
+      phone: clean,
+      mac: macToSend,
+      ip: ROUTER_IP,
       device_model: navigator.userAgent
     };
 
-    fetch(API_HOST + "/api/hotspot/submit", {
+    fetch(API_BASE + "/api/hotspot/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     })
-    .then(function(res) { return res.json(); })
+    .then(function(r) { return r.json(); })
     .then(function(data) {
       btn.disabled = false;
       btn.innerHTML = "<span>Connect to Internet</span>";
@@ -387,91 +435,90 @@
       if (data.status === "approved") {
         showApproved(data.message, data.expiry);
       } else if (data.status === "pending") {
-        showPending(cleanPhone);
+        showPending(clean);
       } else if (data.status === "device_limit") {
-        showError(data.message || "Device limit reached for this account.");
+        showError(data.message || "Device limit reached for this account (max 5 devices).");
       } else if (data.status === "expired") {
-        showError(data.message || "Your subscription has expired. Please contact admin.");
+        showError(data.message || "Your package has expired. Please contact admin to renew.");
       } else {
-        showError(data.message || "Unable to process request.");
+        showError(data.message || "Unable to process request. Please try again.");
       }
     })
-    .catch(function(err) {
+    .catch(function() {
       btn.disabled = false;
       btn.innerHTML = "<span>Connect to Internet</span>";
-      // Even if network error, fallback to pending view to keep polling
-      showPending(cleanPhone);
+      showPending(clean);
     });
   }
 
   function showPending(phone) {
-    document.getElementById("displayPhone").textContent = phone;
+    document.getElementById("lblPendingPhone").textContent = phone;
     document.getElementById("viewStep1").classList.add("d-none");
     document.getElementById("viewStep2").classList.remove("d-none");
-    startPolling();
+    startPoller();
   }
 
   function showApproved(msg, expiry) {
-    if (pollTimer) clearInterval(pollTimer);
+    if (poller) clearInterval(poller);
     document.getElementById("viewStep1").classList.add("d-none");
     document.getElementById("viewStep2").classList.add("d-none");
     document.getElementById("viewStep3").classList.remove("d-none");
 
-    if (msg) document.getElementById("approvedMsg").textContent = msg;
+    if (msg) document.getElementById("txtApprovedMsg").textContent = msg;
     if (expiry) {
-      document.getElementById("expiryInfoBox").textContent = "Plan Active! Valid until: " + expiry;
+      document.getElementById("boxExpiry").textContent = "Plan Active! Valid until: " + expiry;
     }
   }
 
-  function goBack() {
-    if (pollTimer) clearInterval(pollTimer);
+  function changeNumber() {
+    if (poller) clearInterval(poller);
     document.getElementById("viewStep2").classList.add("d-none");
     document.getElementById("viewStep1").classList.remove("d-none");
   }
 
-  function checkStatusNow() {
-    var url = API_HOST + "/api/hotspot/check-status?mac=" + encodeURIComponent(CLIENT_MAC) + "&phone=" + encodeURIComponent(currentPhone);
+  function pollStatusNow() {
+    var macToCheck = isSimulated ? ("TEST:" + submittedPhone.slice(-8)) : ROUTER_MAC;
+    var url = API_BASE + "/api/hotspot/check-status?mac=" + encodeURIComponent(macToCheck) + "&phone=" + encodeURIComponent(submittedPhone);
+    
     fetch(url)
-      .then(function(res) { return res.json(); })
+      .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.status === "approved") {
           showApproved(data.message, data.expiry);
         } else if (data.status === "rejected") {
-          if (pollTimer) clearInterval(pollTimer);
-          alert("Request was rejected by network admin: " + (data.message || ""));
-          goBack();
-        }
-      })
-      .catch(function(e) {});
-  }
-
-  function startPolling() {
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(checkStatusNow, 5000);
-  }
-
-  function finishLogin() {
-    // If bypassed in MikroTik, navigating to target URL works directly!
-    // Also attempt native form submit if link-login-only is available
-    var mkForm = document.getElementById("mikrotikLoginForm");
-    if (mkForm.action && mkForm.action.indexOf("$(") === -1) {
-      mkForm.submit();
-    } else {
-      window.location.href = ORIG_URL && ORIG_URL.indexOf("$(") === -1 ? ORIG_URL : "http://www.google.com";
-    }
-  }
-
-  // Automatic check on page load in case MAC is already bypassed or active
-  window.addEventListener("DOMContentLoaded", function() {
-    var checkUrl = API_HOST + "/api/hotspot/check-status?mac=" + encodeURIComponent(CLIENT_MAC);
-    fetch(checkUrl)
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        if (data.status === "approved") {
-          showApproved(data.message, data.expiry);
+          if (poller) clearInterval(poller);
+          showError("Request was declined by network administrator.");
+          changeNumber();
         }
       })
       .catch(function() {});
+  }
+
+  function startPoller() {
+    if (poller) clearInterval(poller);
+    poller = setInterval(pollStatusNow, 5000);
+  }
+
+  function finishLogin() {
+    var form = document.getElementById("nativeLoginForm");
+    if (form.action && form.action.indexOf("$(") === -1) {
+      form.submit();
+    } else {
+      window.location.href = DEST_URL && DEST_URL.indexOf("$(") === -1 ? DEST_URL : "http://www.google.com";
+    }
+  }
+
+  window.addEventListener("DOMContentLoaded", function() {
+    if (!isSimulated && ROUTER_MAC && ROUTER_MAC !== "AUTO_DETECTED") {
+      fetch(API_BASE + "/api/hotspot/check-status?mac=" + encodeURIComponent(ROUTER_MAC))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.status === "approved") {
+            showApproved(data.message, data.expiry);
+          }
+        })
+        .catch(function() {});
+    }
   });
 </script>
 

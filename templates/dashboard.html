@@ -3,36 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CyberNet ISP | Standalone MikroTik Billing System</title>
+  <title>CyberNet ISP | MikroTik Operations & Hotspot Billing</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
   <style>
     :root {
-      --font-main: 'Plus Jakarta Sans', sans-serif;
+      --font-main: 'Plus Jakarta Sans', -apple-system, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
-      --bg-dark-900: #0b1120;
-      --bg-dark-800: #0f172a;
-      --bg-dark-700: #1e293b;
-      --border-color: rgba(255, 255, 255, 0.08);
-      --border-light: rgba(255, 255, 255, 0.14);
-      --color-primary: #3b82f6;
-      --color-success: #10b981;
-      --color-warning: #f59e0b;
-      --color-danger: #ef4444;
+      --bg-dark-950: #06090e;
+      --bg-dark-900: #0d1117;
+      --bg-dark-800: #161b22;
+      --bg-dark-700: #21262d;
+      --border-color: #30363d;
+      --border-light: rgba(255, 255, 255, 0.15);
+      --primary: #38bdf8;
+      --primary-dark: #0284c7;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #a855f7;
     }
+    * { box-sizing: border-box; }
     body {
       font-family: var(--font-main);
       background-color: var(--bg-dark-900);
-      color: #f1f5f9;
+      color: #f0f6fc;
       min-height: 100vh;
+      margin: 0;
     }
     .app-sidebar {
-      width: 260px;
+      width: 250px;
       background-color: var(--bg-dark-800);
       border-right: 1px solid var(--border-color);
       position: fixed;
@@ -44,7 +48,7 @@
       flex-direction: column;
     }
     .app-content {
-      margin-left: 260px;
+      margin-left: 250px;
       min-width: 0;
     }
     @media (max-width: 991.98px) {
@@ -52,31 +56,31 @@
       .app-sidebar.show { transform: translateX(0); }
       .app-content { margin-left: 0; }
     }
-    .brand-logo {
+    .brand-header {
       padding: 18px 20px;
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
       gap: 12px;
     }
-    .brand-icon {
+    .brand-avatar {
       width: 38px;
       height: 38px;
-      border-radius: 9px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
-      color: #fff;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
     }
-    .sidebar-link {
+    .brand-avatar svg { width: 22px; height: 22px; fill: #ffffff; }
+    .nav-btn {
       display: flex;
       align-items: center;
       gap: 12px;
       padding: 10px 14px;
       border-radius: 8px;
-      color: #94a3b8;
+      color: #8b949e;
       font-weight: 500;
       font-size: 13.5px;
       background: transparent;
@@ -85,22 +89,23 @@
       text-align: left;
       cursor: pointer;
       transition: all 0.15s;
-      text-decoration: none;
     }
-    .sidebar-link:hover { background-color: rgba(255, 255, 255, 0.04); color: #f8fafc; }
-    .sidebar-link.active {
-      background: rgba(59, 130, 246, 0.15);
-      color: #60a5fa;
+    .nav-btn:hover { background-color: rgba(255, 255, 255, 0.05); color: #f0f6fc; }
+    .nav-btn.active {
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
       font-weight: 600;
-      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-left: 3px solid #38bdf8;
     }
-    .sidebar-badge {
+    .nav-btn svg { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+    .nav-badge {
       margin-left: auto;
       font-size: 11px;
-      padding: 2px 7px;
-      border-radius: 10px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 700;
     }
-    .top-navbar {
+    .top-bar {
       height: 64px;
       background-color: var(--bg-dark-800);
       border-bottom: 1px solid var(--border-color);
@@ -112,90 +117,188 @@
       top: 0;
       z-index: 1020;
     }
-    .stat-card {
+    .stat-box {
       background: var(--bg-dark-800);
       border: 1px solid var(--border-color);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 18px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
       position: relative;
-      overflow: hidden;
     }
-    .stat-card .stat-icon {
-      width: 44px;
-      height: 44px;
+    .stat-box:hover {
+      border-color: rgba(56, 189, 248, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+    .stat-icon {
+      width: 42px;
+      height: 42px;
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
       margin-bottom: 12px;
     }
-    .stat-card .stat-val {
-      font-size: 24px;
-      font-weight: 700;
+    .stat-icon svg { width: 22px; height: 22px; fill: currentColor; }
+    .stat-val {
+      font-size: 26px;
+      font-weight: 800;
       letter-spacing: -0.02em;
-      color: #fff;
+      color: #ffffff;
+      line-height: 1.1;
     }
-    .stat-card .stat-lbl {
-      color: #94a3b8;
-      font-size: 12.5px;
+    .stat-lbl {
+      color: #8b949e;
+      font-size: 13px;
       font-weight: 500;
+      margin-top: 4px;
     }
-    .panel-card {
+    .card-panel {
       background: var(--bg-dark-800);
       border: 1px solid var(--border-color);
-      border-radius: 12px;
+      border-radius: 14px;
       overflow: hidden;
       margin-bottom: 24px;
     }
-    .panel-header {
+    .card-panel-header {
       padding: 14px 20px;
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(255, 255, 255, 0.01);
+      background: rgba(255, 255, 255, 0.015);
     }
-    .custom-table {
+    .search-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      background: var(--bg-dark-900);
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+    }
+    .search-input-wrapper {
+      position: relative;
+      flex-grow: 1;
+      min-width: 260px;
+    }
+    .search-input-wrapper svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      fill: #8b949e;
+    }
+    .search-input {
+      width: 100%;
+      background: var(--bg-dark-800);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 9px 14px 9px 40px;
+      font-size: 14px;
+      color: #ffffff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+    .filter-btn {
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: #8b949e;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover { color: #ffffff; background: rgba(255, 255, 255, 0.05); }
+    .filter-btn.active {
+      background: var(--primary);
+      color: #06090e;
+      border-color: var(--primary);
+      font-weight: 700;
+    }
+    .data-table {
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
     }
-    .custom-table th {
-      background-color: rgba(255, 255, 255, 0.02);
-      color: #94a3b8;
+    .data-table th {
+      background-color: var(--bg-dark-900);
+      color: #8b949e;
       font-size: 11.5px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      padding: 11px 16px;
+      padding: 12px 18px;
       border-bottom: 1px solid var(--border-color);
       white-space: nowrap;
     }
-    .custom-table td {
-      padding: 12px 16px;
+    .data-table td {
+      padding: 14px 18px;
       vertical-align: middle;
       border-bottom: 1px solid var(--border-color);
       font-size: 13.5px;
     }
-    .custom-table tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
-    .pulse-dot {
-      width: 8px;
-      height: 8px;
+    .data-table tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: #21262d;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      position: relative;
+    }
+    .status-dot {
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
-      background-color: var(--color-success);
-      box-shadow: 0 0 8px var(--color-success);
-      display: inline-block;
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      border: 2px solid var(--bg-dark-800);
     }
-    .pulse-warning {
-      animation: pulse-warn 1.5s infinite;
+    .status-dot.active { background-color: var(--success); }
+    .status-dot.suspended { background-color: var(--danger); }
+    .status-dot.pending { background-color: var(--warning); }
+    .quota-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      cursor: pointer;
     }
-    @keyframes pulse-warn {
+    .quota-badge:hover {
+      background: rgba(56, 189, 248, 0.2);
+    }
+    .pulse-amber {
+      animation: pulse-ring 1.5s infinite;
+    }
+    @keyframes pulse-ring {
       0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
       70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
       100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
     }
     .font-mono { font-family: var(--font-mono); }
+    .d-none { display: none !important; }
   </style>
 </head>
 <body>
@@ -204,105 +307,125 @@
     
     <!-- SIDEBAR -->
     <aside class="app-sidebar" id="appSidebar">
-      <div class="brand-logo">
-        <div class="brand-icon"><i class="fas fa-network-wired"></i></div>
+      
+      <!-- Brand Header -->
+      <div class="brand-header">
+        <div class="brand-avatar">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+          </svg>
+        </div>
         <div>
           <div class="fw-bold fs-6 text-white lh-1">CyberNet ISP</div>
-          <small class="text-secondary" style="font-size: 11px;">Standalone MikroTik Billing</small>
+          <small class="text-secondary" style="font-size: 11px;">MikroTik Operations Center</small>
         </div>
       </div>
 
+      <!-- Navigation Links -->
       <div class="p-3 flex-grow-1 overflow-y-auto">
         <div class="text-secondary small fw-bold text-uppercase px-2 mb-2" style="font-size: 10.5px;">Navigation</div>
-        
-        <button class="sidebar-link active" onclick="switchSection('dashboard')">
-          <i class="fas fa-chart-pie"></i>
-          <span>Dashboard</span>
+
+        <button class="nav-btn active" id="nav-dashboard" onclick="switchSection('dashboard')">
+          <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          <span>Operations Board</span>
         </button>
 
-        <!-- HOTSPOT REQUESTS (LIVE POPUPS) -->
-        <button class="sidebar-link" onclick="switchSection('hotspot-requests')">
-          <i class="fas fa-mobile-screen-button"></i>
+        <button class="nav-btn" id="nav-hotspot-requests" onclick="switchSection('hotspot-requests')">
+          <svg viewBox="0 0 24 24"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
           <span>Hotspot Requests</span>
           {% if pending_hotspot_requests|length > 0 %}
-          <span class="sidebar-badge bg-danger text-white pulse-warning">{{ pending_hotspot_requests|length }} New</span>
+          <span class="nav-badge bg-danger text-white pulse-amber">{{ pending_hotspot_requests|length }} New</span>
           {% else %}
-          <span class="sidebar-badge bg-secondary">{{ recent_hotspot_requests|length }}</span>
+          <span class="nav-badge bg-secondary">{{ recent_hotspot_requests|length }}</span>
           {% endif %}
         </button>
 
-        <button class="sidebar-link" onclick="switchSection('hotspot')">
-          <i class="fas fa-wifi"></i>
+        <button class="nav-btn" id="nav-hotspot" onclick="switchSection('hotspot')">
+          <svg viewBox="0 0 24 24"><path d="M12 3C7.03 3 2.62 5.08.13 8.44c-.21.28-.19.67.06.92l2.36 2.36c.26.26.69.27.96.02C5.55 9.87 8.6 8.75 12 8.75s6.45 1.12 8.49 2.99c.27.25.7.24.96-.02l2.36-2.36c.25-.25.27-.64.06-.92C21.38 5.08 16.97 3 12 3zm0 6c-3.31 0-6.27 1.39-8.36 3.63-.26.28-.24.71.04.97l2.36 2.24c.27.25.69.23.94-.03C8.42 14.48 10.11 13.75 12 13.75s3.58.73 5.02 2.06c.25.26.67.28.94.03l2.36-2.24c.28-.26.3-.69.04-.97C18.27 10.39 15.31 9 12 9zm0 6c-1.66 0-3.14.71-4.22 1.83-.26.27-.24.7.04.97l3.47 3.32c.39.37 1.02.37 1.41 0l3.48-3.32c.28-.27.3-.7.04-.97C15.14 15.71 13.66 15 12 15z"/></svg>
           <span>Hotspot Users</span>
-          <span class="sidebar-badge bg-success bg-opacity-25 text-success">{{ hotspot_subscribers }}</span>
+          <span class="nav-badge bg-success bg-opacity-25 text-success">{{ hotspot_subscribers }}</span>
         </button>
 
-        <button class="sidebar-link" onclick="switchSection('pppoe')">
-          <i class="fas fa-ethernet"></i>
-          <span>PPPoE Users</span>
-          <span class="sidebar-badge bg-primary bg-opacity-25 text-primary">{{ pppoe_subscribers }}</span>
+        <button class="nav-btn" id="nav-pppoe" onclick="switchSection('pppoe')">
+          <svg viewBox="0 0 24 24"><path d="M7.77 6.76L6.23 5.48.82 12l5.41 6.52 1.54-1.28L3.42 12l4.35-5.24zM7 13h2v-2H7v2zm10-2h-2v2h2v-2zm-6 2h2v-2h-2v2zm5.23-7.52l-1.54 1.28L19.04 12l-4.35 5.24 1.54 1.28L21.64 12l-5.41-6.52z"/></svg>
+          <span>PPPoE Broadband</span>
+          <span class="nav-badge bg-primary bg-opacity-25 text-primary">{{ pppoe_subscribers }}</span>
         </button>
 
-        <button class="sidebar-link" onclick="switchSection('devices')">
-          <i class="fas fa-tv"></i>
+        <button class="nav-btn" id="nav-devices" onclick="switchSection('devices')">
+          <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
           <span>Android TV / MACs</span>
-          <span class="sidebar-badge bg-warning bg-opacity-25 text-warning">{{ devices|length }}</span>
+          <span class="nav-badge bg-warning bg-opacity-25 text-warning">{{ devices|length }}</span>
         </button>
 
-        <button class="sidebar-link" onclick="switchSection('collections')">
-          <i class="fas fa-hand-holding-usd"></i>
-          <span>Collections</span>
-          <span class="sidebar-badge bg-info bg-opacity-25 text-info">{{ payments|length }}</span>
+        <button class="nav-btn" id="nav-collections" onclick="switchSection('collections')">
+          <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+          <span>Payments & Billing</span>
+          <span class="nav-badge bg-info bg-opacity-25 text-info">{{ payments|length }}</span>
         </button>
 
-        <button class="sidebar-link" onclick="switchSection('packages')">
-          <i class="fas fa-boxes-stacked"></i>
+        <button class="nav-btn" id="nav-packages" onclick="switchSection('packages')">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
           <span>Packages</span>
-          <span class="sidebar-badge bg-secondary">{{ packages|length }}</span>
+          <span class="nav-badge bg-secondary">{{ packages|length }}</span>
         </button>
 
-        <button class="sidebar-link" onclick="switchSection('mikrotik')">
-          <i class="fas fa-server"></i>
+        <button class="nav-btn" id="nav-mikrotik" onclick="switchSection('mikrotik')">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
           <span>Router Hardware</span>
-          <span class="sidebar-badge bg-success"><span class="pulse-dot me-1"></span>{{ router_ping }}</span>
+          <span class="nav-badge bg-success font-mono">{{ router_ping }}</span>
         </button>
       </div>
 
-      <!-- Quick Actions in Sidebar -->
+      <!-- Quick Action Buttons in Sidebar -->
       <div class="p-3 border-top border-secondary border-opacity-25">
-        <button class="btn btn-warning btn-sm w-100 mb-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#bypassTvModal">
-          <i class="fas fa-tv me-1"></i> Bypass Android TV
+        <button class="btn btn-warning btn-sm w-100 mb-2 fw-bold text-dark d-flex align-items-center justify-content-center gap-2" data-bs-toggle="modal" data-bs-target="#bypassTvModal">
+          <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
+          <span>Bypass Android TV</span>
         </button>
-        <button class="btn btn-primary btn-sm w-100 fw-semibold" data-bs-toggle="modal" data-bs-target="#newSubscriberModal">
-          <i class="fas fa-user-plus me-1"></i> Add Subscriber
+        <button class="btn btn-primary btn-sm w-100 fw-bold d-flex align-items-center justify-content-center gap-2" data-bs-toggle="modal" data-bs-target="#newSubscriberModal">
+          <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          <span>Add Subscriber</span>
         </button>
       </div>
+
     </aside>
 
-    <!-- MAIN CONTENT AREA -->
+    <!-- MAIN CONTENT -->
     <div class="app-content flex-grow-1">
       
       <!-- TOP NAVBAR -->
-      <header class="top-navbar">
+      <header class="top-bar">
         <div class="d-flex align-items-center gap-3">
           <button class="btn btn-sm btn-outline-secondary d-lg-none" onclick="toggleSidebar()">
-            <i class="fas fa-bars"></i>
+            <svg style="width:18px;height:18px;fill:currentColor" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
           </button>
-          <span class="fw-bold text-white fs-5" id="pageTitle">ISP Operations Center</span>
-          <span class="badge bg-dark border border-secondary text-secondary font-mono small d-none d-md-inline-block">cybernet.db</span>
+          <div>
+            <span class="fw-bold text-white fs-5" id="pageTitle">Operations Center</span>
+            <span class="badge bg-secondary bg-opacity-25 text-secondary ms-2 small d-none d-md-inline-block font-mono">100% Real Database State</span>
+          </div>
         </div>
 
-        <div class="d-flex align-items-center gap-3">
-          <!-- Real Router Socket Status -->
-          <div class="d-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-dark border border-secondary border-opacity-50 small">
-            <span class="pulse-dot"></span>
-            <span class="text-secondary">MikroTik Router:</span>
+        <div class="d-flex align-items-center gap-2">
+          <!-- Router Connectivity Pill -->
+          <div class="d-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-dark border border-secondary small">
+            <span style="width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
+            <span class="text-secondary d-none d-sm-inline">Router:</span>
             <span class="font-mono text-white fw-bold">{{ router_host }}:{{ router_port }}</span>
             <span class="badge bg-success bg-opacity-25 text-success font-mono">{{ router_ping }}</span>
           </div>
 
-          <a href="/hotspot/login" target="_blank" class="btn btn-outline-info btn-sm">
-            <i class="fas fa-arrow-up-right-from-square me-1"></i> Preview Hotspot
+          <!-- Sync Button -->
+          <form action="/api/router/sync" method="POST" class="d-inline" title="Sync live bindings from MikroTik router">
+            <button type="submit" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+              <svg style="width:14px;height:14px;fill:currentColor" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+              <span class="d-none d-md-inline">Sync Router</span>
+            </button>
+          </form>
+
+          <a href="/hotspot/login" target="_blank" class="btn btn-outline-info btn-sm d-flex align-items-center gap-1">
+            <svg style="width:14px;height:14px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+            <span class="d-none d-sm-inline">Hotspot Popup</span>
           </a>
         </div>
       </header>
@@ -314,200 +437,208 @@
         {% if pending_hotspot_requests|length > 0 %}
         <div class="alert alert-warning border-warning border-opacity-50 bg-warning bg-opacity-10 d-flex align-items-center justify-content-between p-3 rounded-3 mb-4 shadow-sm">
           <div class="d-flex align-items-center gap-3">
-            <div class="fs-4 text-warning"><i class="fas fa-bell fa-shake"></i></div>
+            <div class="fs-4 text-warning">
+              <svg style="width:28px;height:28px;fill:#f59e0b;" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+            </div>
             <div>
               <div class="fw-bold text-white fs-6">{{ pending_hotspot_requests|length }} Customer(s) Waiting for Hotspot Activation!</div>
-              <div class="small text-warning text-opacity-75">Customer submitted their mobile number on the MikroTik Hotspot popup and is waiting for internet approval.</div>
+              <div class="small text-warning text-opacity-75">A customer submitted their mobile number on the captive portal popup and is waiting for internet access.</div>
             </div>
           </div>
-          <button class="btn btn-warning btn-sm fw-bold px-3" onclick="switchSection('hotspot-requests')">
-            <i class="fas fa-arrow-right me-1"></i> Review & Approve Requests
+          <button class="btn btn-warning btn-sm fw-bold px-3 text-dark" onclick="switchSection('hotspot-requests')">
+            Review & Approve Now
           </button>
         </div>
         {% endif %}
 
         <!-- ===================================================== -->
-        <!-- 1. DASHBOARD OVERVIEW                                 -->
+        <!-- 1. OPERATIONS DASHBOARD                               -->
         <!-- ===================================================== -->
         <div id="section-dashboard" class="content-section">
           
-          <!-- Stat Cards -->
+          <!-- CLICKABLE KPI STAT CARDS -->
           <div class="row g-3 mb-4">
-            <div class="col-6 col-md-3">
-              <div class="stat-card">
-                <div class="stat-icon bg-primary bg-opacity-15 text-primary">
-                  <i class="fas fa-users"></i>
-                </div>
-                <div class="stat-val">{{ total_subscribers }}</div>
-                <div class="stat-lbl">Total Subscribers</div>
-              </div>
-            </div>
-
-            <div class="col-6 col-md-3">
-              <div class="stat-card">
-                <div class="stat-icon bg-success bg-opacity-15 text-success">
-                  <i class="fas fa-signal"></i>
-                </div>
-                <div class="stat-val">{{ active_subscribers }}</div>
-                <div class="stat-lbl">Active Customers</div>
-              </div>
-            </div>
-
-            <div class="col-6 col-md-3">
-              <div class="stat-card">
-                <div class="stat-icon bg-warning bg-opacity-15 text-warning">
-                  <i class="fas fa-tv"></i>
-                </div>
-                <div class="stat-val">{{ devices|length }}</div>
-                <div class="stat-lbl">Bypassed Devices (TV/MAC)</div>
-              </div>
-            </div>
-
-            <div class="col-6 col-md-3">
-              <div class="stat-card">
-                <div class="stat-icon bg-info bg-opacity-15 text-info">
-                  <i class="fas fa-coins"></i>
-                </div>
-                <div class="stat-val">{{ month_revenue }} <small class="fs-6">SAR</small></div>
-                <div class="stat-lbl">This Month Collected</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Pending Hotspot Popups Quick Panel -->
-          {% if pending_hotspot_requests|length > 0 %}
-          <div class="panel-card border-warning mb-4">
-            <div class="panel-header bg-warning bg-opacity-10">
-              <h6 class="mb-0 fw-bold text-warning">
-                <i class="fas fa-mobile-screen-button me-2"></i>Live Hotspot Phone Submissions (Waiting for Approval)
-              </h6>
-              <span class="badge bg-warning text-dark">{{ pending_hotspot_requests|length }} Pending</span>
-            </div>
-            <div class="table-responsive">
-              <table class="custom-table">
-                <thead>
-                  <tr>
-                    <th>Customer Mobile</th>
-                    <th>Device MAC</th>
-                    <th>Detected Device</th>
-                    <th>Client IP</th>
-                    <th>Submitted Time</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for r in pending_hotspot_requests %}
-                  <tr>
-                    <td class="font-mono text-warning fw-bold fs-6">{{ r.phone }}</td>
-                    <td class="font-mono text-info">{{ r.mac_address }}</td>
-                    <td><span class="badge bg-secondary">{{ r.device_model or 'Mobile' }}</span></td>
-                    <td class="font-mono text-muted small">{{ r.ip_address }}</td>
-                    <td class="text-muted small">{{ r.created_at.strftime('%H:%M:%S') if r.created_at else '-' }}</td>
-                    <td>
-                      <button 
-                        class="btn btn-success btn-sm fw-bold px-3"
-                        onclick="openApproveModal({{ r.id }}, '{{ r.phone }}', '{{ r.mac_address }}', '{{ r.device_model or 'Mobile' }}')"
-                      >
-                        <i class="fas fa-check-circle me-1"></i> Approve & Activate
-                      </button>
-                      <form action="/api/hotspot/requests/{{ r.id }}/reject" method="POST" class="d-inline" onsubmit="return confirm('Reject connection request?');">
-                        <button type="submit" class="btn btn-outline-danger btn-sm">Reject</button>
-                      </form>
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          {% endif %}
-
-          <!-- Subscribers Real Table -->
-          <div class="panel-card">
-            <div class="panel-header">
-              <h6 class="mb-0 fw-bold"><i class="fas fa-users text-primary me-2"></i>Active Subscribers (Real State in cybernet.db)</h6>
-              <div class="d-flex gap-2">
-                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#bypassTvModal">
-                  <i class="fas fa-tv me-1"></i> Bypass Android TV
-                </button>
-                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newSubscriberModal">
-                  <i class="fas fa-user-plus me-1"></i> Add Subscriber
-                </button>
-              </div>
-            </div>
             
+            <div class="col-6 col-lg-3" onclick="filterBy('hotspot')">
+              <div class="stat-box">
+                <div class="stat-icon" style="background:rgba(16, 185, 129, 0.15); color:#10b981;">
+                  <svg viewBox="0 0 24 24"><path d="M12 3C7.03 3 2.62 5.08.13 8.44c-.21.28-.19.67.06.92l2.36 2.36c.26.26.69.27.96.02C5.55 9.87 8.6 8.75 12 8.75s6.45 1.12 8.49 2.99c.27.25.7.24.96-.02l2.36-2.36c.25-.25.27-.64.06-.92C21.38 5.08 16.97 3 12 3zm0 6c-3.31 0-6.27 1.39-8.36 3.63-.26.28-.24.71.04.97l2.36 2.24c.27.25.69.23.94-.03C8.42 14.48 10.11 13.75 12 13.75s3.58.73 5.02 2.06c.25.26.67.28.94.03l2.36-2.24c.28-.26.3-.69.04-.97C18.27 10.39 15.31 9 12 9zm0 6c-1.66 0-3.14.71-4.22 1.83-.26.27-.24.7.04.97l3.47 3.32c.39.37 1.02.37 1.41 0l3.48-3.32c.28-.27.3-.7.04-.97C15.14 15.71 13.66 15 12 15z"/></svg>
+                </div>
+                <div class="stat-val text-success">{{ hotspot_subscribers }}</div>
+                <div class="stat-lbl">Active Hotspot Users</div>
+              </div>
+            </div>
+
+            <div class="col-6 col-lg-3" onclick="filterBy('pppoe')">
+              <div class="stat-box">
+                <div class="stat-icon" style="background:rgba(56, 189, 248, 0.15); color:#38bdf8;">
+                  <svg viewBox="0 0 24 24"><path d="M7.77 6.76L6.23 5.48.82 12l5.41 6.52 1.54-1.28L3.42 12l4.35-5.24zM7 13h2v-2H7v2zm10-2h-2v2h2v-2zm-6 2h2v-2h-2v2zm5.23-7.52l-1.54 1.28L19.04 12l-4.35 5.24 1.54 1.28L21.64 12l-5.41-6.52z"/></svg>
+                </div>
+                <div class="stat-val text-info">{{ pppoe_subscribers }}</div>
+                <div class="stat-lbl">PPPoE Broadband</div>
+              </div>
+            </div>
+
+            <div class="col-6 col-lg-3" onclick="filterBy('devices')">
+              <div class="stat-box">
+                <div class="stat-icon" style="background:rgba(245, 158, 11, 0.15); color:#f59e0b;">
+                  <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
+                </div>
+                <div class="stat-val text-warning">{{ devices|length }}</div>
+                <div class="stat-lbl">Bypassed Android TVs</div>
+              </div>
+            </div>
+
+            <div class="col-6 col-lg-3" onclick="filterBy('collections')">
+              <div class="stat-box">
+                <div class="stat-icon" style="background:rgba(168, 85, 247, 0.15); color:#a855f7;">
+                  <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+                </div>
+                <div class="stat-val text-white">{{ month_revenue }} <small class="fs-6 text-secondary">SAR</small></div>
+                <div class="stat-lbl">Collected This Month</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- SUBSCRIBER OPERATIONS TABLE & FILTER PANEL -->
+          <div class="card-panel">
+            
+            <div class="card-panel-header">
+              <div>
+                <h6 class="mb-0 fw-bold text-white d-flex align-items-center gap-2">
+                  <svg style="width:18px;height:18px;fill:#38bdf8" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                  <span>Customer Accounts & Multi-Device Subscriptions</span>
+                </h6>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-warning btn-sm fw-bold text-dark" data-bs-toggle="modal" data-bs-target="#bypassTvModal">
+                  + Bypass Android TV
+                </button>
+                <button class="btn btn-primary btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#newSubscriberModal">
+                  + Add Subscriber
+                </button>
+              </div>
+            </div>
+
+            <!-- LIVE SEARCH & CATEGORY FILTERS -->
+            <div class="search-filter-bar">
+              <div class="search-input-wrapper">
+                <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                <input type="text" id="filterSearch" class="search-input" placeholder="Search by mobile number (059...), name, or MAC address..." oninput="applyFilters()">
+              </div>
+
+              <div class="d-flex gap-1 flex-wrap">
+                <button class="filter-btn active" id="btn-filter-all" onclick="setCategoryFilter('all')">All ({{ subscribers|length }})</button>
+                <button class="filter-btn" id="btn-filter-hotspot" onclick="setCategoryFilter('hotspot')">Hotspot ({{ hotspot_subscribers }})</button>
+                <button class="filter-btn" id="btn-filter-pppoe" onclick="setCategoryFilter('pppoe')">PPPoE ({{ pppoe_subscribers }})</button>
+                <button class="filter-btn" id="btn-filter-active" onclick="setCategoryFilter('active')">Active ({{ active_subscribers }})</button>
+                <button class="filter-btn" id="btn-filter-suspended" onclick="setCategoryFilter('suspended')">Suspended ({{ suspended_subscribers }})</button>
+              </div>
+            </div>
+
+            <!-- TABLE -->
             <div class="table-responsive">
-              <table class="custom-table">
+              <table class="data-table" id="subscribersTable">
                 <thead>
                   <tr>
+                    <th>Customer</th>
                     <th>Type</th>
-                    <th>Mobile / Username</th>
-                    <th>Full Name</th>
                     <th>Package Plan</th>
-                    <th>Multi-Device Quota</th>
+                    <th>Connected Devices</th>
+                    <th>Expiry Countdown</th>
                     <th>Status</th>
-                    <th>Expiry Date</th>
-                    <th>Actions</th>
+                    <th style="text-align: right;">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for s in subscribers %}
-                  <tr>
+                  <tr class="sub-row" data-id="{{ s.id }}" data-type="{{ s.type }}" data-status="{{ s.status }}" data-search="{{ s.phone }} {{ s.username }} {{ s.fullname }} {{ s.package.name if s.package else '' }} {% for d in s.devices %}{{ d.mac_address }} {{ d.device_name }} {% endfor %}">
                     <td>
-                      <span class="badge {{ 'bg-primary' if s.type == 'pppoe' else 'bg-success' }} text-uppercase">
+                      <div class="d-flex align-items-center gap-3">
+                        <div class="user-avatar">
+                          {{ s.fullname[:1] if s.fullname else 'U' }}
+                          <span class="status-dot {{ s.status }}"></span>
+                        </div>
+                        <div>
+                          <div class="fw-bold text-white font-mono fs-6">{{ s.phone or s.username }}</div>
+                          <div class="small text-secondary">{{ s.fullname }}</div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td>
+                      <span class="badge {{ 'bg-primary' if s.type == 'pppoe' else 'bg-success' }} text-uppercase font-mono">
                         {{ s.type }}
                       </span>
                     </td>
-                    <td class="font-mono fw-bold text-white">{{ s.username }}</td>
-                    <td>{{ s.fullname }}</td>
-                    <td><span class="badge bg-secondary">{{ s.package.name if s.package else 'Default' }}</span></td>
+
                     <td>
-                      <span class="badge bg-info bg-opacity-25 text-info">
-                        {{ s.devices|length }} / {{ s.package.shared_users if s.package else 5 }} Devices
-                      </span>
-                      {% if s.type == 'hotspot' %}
-                      <button 
-                        class="btn btn-outline-warning btn-sm py-0 px-1 ms-1" 
-                        title="Add Android TV or extra phone"
-                        onclick="openAddDeviceForSub({{ s.id }}, '{{ s.phone or s.username }}')"
-                      >
-                        + TV
-                      </button>
+                      <div class="fw-semibold text-white">{{ s.package.name if s.package else 'Default Plan' }}</div>
+                      <small class="text-secondary">{{ s.package.rate_limit if s.package else 'Standard' }} • {{ s.monthly_fee }} SAR</small>
+                    </td>
+
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="quota-badge" onclick="openCustomerDetails({{ s.id }})" title="Click to view and manage connected devices">
+                          <svg style="width:14px;height:14px;fill:currentColor" viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/></svg>
+                          <span>{{ s.devices|length }} / {{ s.package.shared_users if s.package else 5 }} Devices</span>
+                        </span>
+                        {% if s.type == 'hotspot' %}
+                        <button class="btn btn-outline-warning btn-sm py-0 px-2 small" onclick="openAddDeviceModal({{ s.id }}, '{{ s.phone or s.username }}')" title="Bypass Android TV or Smart TV under this customer">
+                          + TV
+                        </button>
+                        {% endif %}
+                      </div>
+                    </td>
+
+                    <td>
+                      {% if s.expiry_date %}
+                      <div class="font-mono fw-bold text-warning">{{ s.expiry_date }}</div>
+                      <small class="text-secondary">Valid Subscription</small>
+                      {% else %}
+                      <span class="text-muted small">No Expiry</span>
                       {% endif %}
                     </td>
+
                     <td>
                       {% if s.status == 'active' %}
-                      <span class="badge bg-success bg-opacity-25 text-success">Active</span>
+                      <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-2 py-1">Active</span>
                       {% elif s.status == 'suspended' %}
-                      <span class="badge bg-danger bg-opacity-25 text-danger">Suspended</span>
+                      <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25 px-2 py-1">Suspended</span>
                       {% else %}
-                      <span class="badge bg-warning bg-opacity-25 text-warning">{{ s.status }}</span>
+                      <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25 px-2 py-1">{{ s.status }}</span>
                       {% endif %}
                     </td>
-                    <td class="font-mono text-warning small">{{ s.expiry_date or 'No Expiry' }}</td>
-                    <td>
-                      <div class="d-flex gap-1">
+
+                    <td style="text-align: right;">
+                      <div class="d-inline-flex gap-1">
+                        <!-- Details / Devices -->
+                        <button class="btn btn-outline-info btn-sm py-1 px-2" onclick="openCustomerDetails({{ s.id }})" title="View Customer Devices & Payments">
+                          Details
+                        </button>
+
                         <!-- Renew Form -->
                         <form action="/api/subscribers/{{ s.id }}/renew" method="POST" class="d-inline">
                           <input type="hidden" name="amount" value="{{ s.monthly_fee or 30.0 }}">
                           <input type="hidden" name="days" value="30">
                           <input type="hidden" name="method" value="cash">
-                          <button type="submit" class="btn btn-outline-success btn-sm py-0 px-2" title="Renew for 30 Days">
-                            <i class="fas fa-arrows-rotate me-1"></i>Renew
+                          <button type="submit" class="btn btn-outline-success btn-sm py-1 px-2" title="Renew plan for 30 days">
+                            Renew
                           </button>
                         </form>
 
-                        <!-- Suspend/Resume Form -->
+                        <!-- Suspend / Resume -->
                         {% if s.status == 'active' %}
-                        <form action="/api/subscribers/{{ s.id }}/suspend" method="POST" class="d-inline" onsubmit="return confirm('Suspend subscriber on MikroTik?');">
-                          <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2" title="Suspend">
-                            <i class="fas fa-pause"></i>
+                        <form action="/api/subscribers/{{ s.id }}/suspend" method="POST" class="d-inline" onsubmit="return confirm('Suspend customer on MikroTik router?');">
+                          <button type="submit" class="btn btn-outline-danger btn-sm py-1 px-2" title="Suspend customer access">
+                            Suspend
                           </button>
                         </form>
                         {% else %}
                         <form action="/api/subscribers/{{ s.id }}/resume" method="POST" class="d-inline">
-                          <button type="submit" class="btn btn-outline-primary btn-sm py-0 px-2" title="Resume">
-                            <i class="fas fa-play"></i>
+                          <button type="submit" class="btn btn-outline-primary btn-sm py-1 px-2" title="Resume customer access">
+                            Resume
                           </button>
                         </form>
                         {% endif %}
@@ -515,11 +646,13 @@
                     </td>
                   </tr>
                   {% else %}
-                  <tr>
-                    <td colspan="8" class="text-center text-muted py-5">
-                      <i class="fas fa-users-slash fs-2 text-secondary mb-3 d-block"></i>
-                      <strong>0 Subscribers in cybernet.db</strong>
-                      <div class="small mt-1">Customers who connect to Hotspot Wi-Fi and submit their phone number will automatically appear here!</div>
+                  <tr id="emptyRow">
+                    <td colspan="7" class="text-center py-5">
+                      <div class="text-secondary fs-2 mb-2">
+                        <svg style="width:48px;height:48px;fill:#4b5563" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                      </div>
+                      <strong class="text-white fs-6">0 Subscribers in cybernet.db</strong>
+                      <div class="text-secondary small mt-1">When customers submit their phone number on the Hotspot popup, they will appear here!</div>
                     </td>
                   </tr>
                   {% endfor %}
@@ -527,6 +660,7 @@
               </table>
             </div>
           </div>
+
         </div>
 
         <!-- ===================================================== -->
@@ -534,68 +668,67 @@
         <!-- ===================================================== -->
         <div id="section-hotspot-requests" class="content-section d-none">
           
-          <div class="panel-card mb-4">
-            <div class="panel-header">
-              <h5 class="fw-bold mb-0">
-                <i class="fas fa-mobile-screen-button text-warning me-2"></i>Hotspot Phone Submissions ({{ recent_hotspot_requests|length }})
-              </h5>
-              <span class="badge bg-secondary">Submitted via MikroTik Captive Portal Popup</span>
+          <div class="card-panel mb-4">
+            <div class="card-panel-header">
+              <h6 class="mb-0 fw-bold text-white d-flex align-items-center gap-2">
+                <svg style="width:18px;height:18px;fill:#f59e0b" viewBox="0 0 24 24"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
+                <span>Live Hotspot Mobile Submissions ({{ recent_hotspot_requests|length }})</span>
+              </h6>
+              <span class="badge bg-secondary font-mono">Submitted via Captive Portal</span>
             </div>
 
             <div class="table-responsive">
-              <table class="custom-table">
+              <table class="data-table">
                 <thead>
                   <tr>
                     <th>Customer Mobile</th>
-                    <th>Device MAC Address</th>
                     <th>Device Model</th>
-                    <th>IP Address</th>
+                    <th>Device MAC Address</th>
+                    <th>Client IP</th>
+                    <th>Submitted Time</th>
                     <th>Status</th>
-                    <th>Submitted At</th>
-                    <th>Action</th>
+                    <th style="text-align: right;">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for r in recent_hotspot_requests %}
                   <tr>
                     <td class="font-mono text-warning fw-bold fs-6">{{ r.phone }}</td>
-                    <td class="font-mono text-info">{{ r.mac_address }}</td>
-                    <td><span class="badge bg-secondary">{{ r.device_model or 'Mobile' }}</span></td>
-                    <td class="font-mono text-muted small">{{ r.ip_address }}</td>
+                    <td><span class="badge bg-secondary">{{ r.device_model or 'Mobile Phone' }}</span></td>
+                    <td class="font-mono text-info fw-bold">{{ r.mac_address }}</td>
+                    <td class="font-mono text-secondary small">{{ r.ip_address }}</td>
+                    <td class="text-secondary small">{{ r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '-' }}</td>
                     <td>
                       {% if r.status == 'pending' %}
-                      <span class="badge bg-warning text-dark pulse-warning">Pending Approval</span>
+                      <span class="badge bg-warning text-dark pulse-amber">Pending Activation</span>
                       {% elif r.status == 'approved' %}
                       <span class="badge bg-success">Approved & Active</span>
                       {% elif r.status == 'rejected' %}
-                      <span class="badge bg-danger">Rejected</span>
+                      <span class="badge bg-danger">Declined</span>
                       {% else %}
                       <span class="badge bg-secondary">{{ r.status }}</span>
                       {% endif %}
                     </td>
-                    <td class="text-muted small">{{ r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '-' }}</td>
-                    <td>
+                    <td style="text-align: right;">
                       {% if r.status == 'pending' %}
                       <button 
                         class="btn btn-success btn-sm fw-bold px-3"
-                        onclick="openApproveModal({{ r.id }}, '{{ r.phone }}', '{{ r.mac_address }}', '{{ r.device_model or 'Mobile' }}')"
+                        onclick="openApproveModal({{ r.id }}, '{{ r.phone }}', '{{ r.mac_address }}', '{{ r.device_model or 'Mobile Phone' }}')"
                       >
-                        <i class="fas fa-check-circle me-1"></i> Approve & Activate
+                        Approve & Activate
                       </button>
-                      <form action="/api/hotspot/requests/{{ r.id }}/reject" method="POST" class="d-inline" onsubmit="return confirm('Reject request?');">
+                      <form action="/api/hotspot/requests/{{ r.id }}/reject" method="POST" class="d-inline" onsubmit="return confirm('Decline connection request?');">
                         <button type="submit" class="btn btn-outline-danger btn-sm">Reject</button>
                       </form>
                       {% else %}
-                      <span class="text-muted small">Processed</span>
+                      <span class="text-secondary small">Completed</span>
                       {% endif %}
                     </td>
                   </tr>
                   {% else %}
                   <tr>
-                    <td colspan="7" class="text-center text-muted py-5">
-                      <i class="fas fa-wifi fs-2 text-secondary mb-3 d-block"></i>
-                      No captive portal requests yet.
-                      <div class="small mt-1">When any customer connects to WiFi and submits their phone number on the popup, it appears here instantly!</div>
+                    <td colspan="7" class="text-center py-5 text-secondary">
+                      No captive portal requests yet. When a user connects to Wi-Fi and enters their phone, it shows here!
                     </td>
                   </tr>
                   {% endfor %}
@@ -604,162 +737,67 @@
             </div>
           </div>
 
-          <!-- Captive Portal Deployment Guide -->
-          <div class="panel-card border-info">
-            <div class="panel-header bg-info bg-opacity-10">
-              <h6 class="mb-0 fw-bold text-info"><i class="fas fa-download me-2"></i>MikroTik Hotspot Captive Portal Setup</h6>
+          <!-- Router Captive Portal Deployment Guide -->
+          <div class="card-panel border-info">
+            <div class="card-panel-header bg-info bg-opacity-10">
+              <h6 class="mb-0 fw-bold text-info">MikroTik Hotspot Setup & Captive Portal Deployment</h6>
               <div class="d-flex gap-2">
                 <a href="/hotspot/download-login" class="btn btn-info btn-sm text-dark fw-bold">
-                  <i class="fas fa-download me-1"></i> Download login.html
+                  Download login.html
                 </a>
                 <a href="/hotspot/login" target="_blank" class="btn btn-outline-info btn-sm">
-                  <i class="fas fa-external-link-alt me-1"></i> Test Portal in Browser
+                  Test Portal Popup in Browser
                 </a>
               </div>
             </div>
             <div class="p-4">
               <div class="row g-4">
                 <div class="col-md-6">
-                  <h6 class="text-white fw-bold">Step 1: Add Walled Garden on MikroTik</h6>
-                  <p class="small text-muted">Allow unauthenticated phones to submit requests to this server:</p>
+                  <h6 class="text-white fw-bold">Step 1: Add Walled Garden on RouterOS</h6>
+                  <p class="small text-secondary">Allow unauthenticated phones to submit requests to the server:</p>
                   <pre class="bg-dark p-3 rounded-3 text-warning font-mono small border border-secondary border-opacity-25 user-select-all mb-3">/ip hotspot walled-garden ip
 add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
                 </div>
                 <div class="col-md-6">
                   <h6 class="text-white fw-bold">Step 2: Upload login.html to Router</h6>
-                  <p class="small text-muted">In WinBox, open <strong>Files</strong>, open the <code>hotspot/</code> directory, and replace <code>login.html</code> with the downloaded file.</p>
+                  <p class="small text-secondary">In WinBox, open <strong>Files</strong>, open the <code>hotspot/</code> directory, and replace <code>login.html</code> with the downloaded file.</p>
                   <div class="small text-secondary">
-                    <i class="fas fa-check text-success me-1"></i> Responsive mobile card design<br>
-                    <i class="fas fa-check text-success me-1"></i> Self-contained styles (no CDN dependencies)<br>
-                    <i class="fas fa-check text-success me-1"></i> Automatic 5-second polling until admin approves
+                    <span class="text-success me-1">✔</span> Perfectly centered on mobile phones<br>
+                    <span class="text-success me-1">✔</span> Inline SVG icons (zero external CDN dependence)<br>
+                    <span class="text-success me-1">✔</span> Automatic 5-second polling until admin approves
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
         </div>
 
         <!-- ===================================================== -->
-        <!-- 3. HOTSPOT SUBSCRIBERS                                -->
-        <!-- ===================================================== -->
-        <div id="section-hotspot" class="content-section d-none">
-          <div class="panel-card">
-            <div class="panel-header">
-              <h5 class="fw-bold mb-0">Hotspot Subscribers ({{ hotspot_subscribers }})</h5>
-              <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#newSubscriberModal">
-                <i class="fas fa-user-plus me-1"></i> Add Hotspot User
-              </button>
-            </div>
-            <div class="table-responsive">
-              <table class="custom-table">
-                <thead>
-                  <tr>
-                    <th>Customer Phone</th>
-                    <th>Full Name</th>
-                    <th>Package</th>
-                    <th>Device Quota</th>
-                    <th>Expiry Date</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for s in subscribers if s.type == 'hotspot' %}
-                  <tr>
-                    <td class="font-mono text-success fw-bold">{{ s.phone or s.username }}</td>
-                    <td>{{ s.fullname }}</td>
-                    <td>{{ s.package.name if s.package else 'Default' }}</td>
-                    <td>
-                      <span class="badge bg-secondary">{{ s.devices|length }} / {{ s.package.shared_users if s.package else 5 }} Devices</span>
-                      <button class="btn btn-outline-warning btn-sm py-0 px-1 ms-1" onclick="openAddDeviceForSub({{ s.id }}, '{{ s.phone or s.username }}')">+ TV</button>
-                    </td>
-                    <td class="font-mono text-warning">{{ s.expiry_date or 'None' }}</td>
-                    <td>
-                      <form action="/api/subscribers/{{ s.id }}/renew" method="POST" class="d-inline">
-                        <input type="hidden" name="amount" value="{{ s.monthly_fee or 30.0 }}">
-                        <input type="hidden" name="days" value="30">
-                        <button type="submit" class="btn btn-outline-success btn-sm py-0 px-2">Renew</button>
-                      </form>
-                    </td>
-                  </tr>
-                  {% else %}
-                  <tr>
-                    <td colspan="6" class="text-center text-muted py-4">No Hotspot subscribers yet.</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- ===================================================== -->
-        <!-- 4. PPPOE SUBSCRIBERS                                  -->
-        <!-- ===================================================== -->
-        <div id="section-pppoe" class="content-section d-none">
-          <div class="panel-card">
-            <div class="panel-header">
-              <h5 class="fw-bold mb-0">PPPoE Subscribers ({{ pppoe_subscribers }})</h5>
-              <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newSubscriberModal">
-                <i class="fas fa-user-plus me-1"></i> Add PPPoE User
-              </button>
-            </div>
-            <div class="table-responsive">
-              <table class="custom-table">
-                <thead>
-                  <tr>
-                    <th>Username</th>
-                    <th>Full Name</th>
-                    <th>Phone</th>
-                    <th>Package</th>
-                    <th>Status</th>
-                    <th>Expiry Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for s in subscribers if s.type == 'pppoe' %}
-                  <tr>
-                    <td class="font-mono text-primary fw-bold">{{ s.username }}</td>
-                    <td>{{ s.fullname }}</td>
-                    <td>{{ s.phone }}</td>
-                    <td>{{ s.package.name if s.package else 'Default' }}</td>
-                    <td><span class="badge bg-success">Active</span></td>
-                    <td class="font-mono text-warning">{{ s.expiry_date or 'None' }}</td>
-                  </tr>
-                  {% else %}
-                  <tr>
-                    <td colspan="6" class="text-center text-muted py-4">No PPPoE subscribers yet.</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- ===================================================== -->
-        <!-- 5. ANDROID TV & BYPASSED DEVICES                      -->
+        <!-- 3. ANDROID TV & BYPASSED DEVICES                      -->
         <!-- ===================================================== -->
         <div id="section-devices" class="content-section d-none">
-          <div class="panel-card">
-            <div class="panel-header">
+          <div class="card-panel">
+            <div class="card-panel-header">
               <div>
-                <h5 class="fw-bold mb-0">Android TV & Bypassed Devices ({{ devices|length }})</h5>
-                <small class="text-muted">Direct MAC Address bypass in MikroTik (<code>/ip hotspot ip-binding type=bypassed</code>) - No browser login required.</small>
+                <h6 class="mb-0 fw-bold text-white">Android TV & Bypassed Devices ({{ devices|length }})</h6>
+                <small class="text-secondary">MAC Address bypass in MikroTik (<code>/ip hotspot ip-binding type=bypassed</code>) - Direct internet without captive portal browser.</small>
               </div>
-              <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#bypassTvModal">
-                <i class="fas fa-tv me-1"></i> Bypass New Device
+              <button class="btn btn-warning btn-sm text-dark fw-bold" data-bs-toggle="modal" data-bs-target="#bypassTvModal">
+                + Bypass New Device
               </button>
             </div>
             <div class="table-responsive">
-              <table class="custom-table">
+              <table class="data-table">
                 <thead>
                   <tr>
                     <th>Device Name</th>
-                    <th>Subscriber (Phone)</th>
+                    <th>Linked Subscriber</th>
                     <th>MAC Address</th>
-                    <th>Type</th>
+                    <th>Device Type</th>
                     <th>Bypass State</th>
                     <th>Date Added</th>
+                    <th style="text-align: right;">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -769,14 +807,18 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
                     <td class="font-mono text-warning">{{ d.subscriber.phone if d.subscriber else '-' }} ({{ d.subscriber.fullname if d.subscriber else '' }})</td>
                     <td class="font-mono text-info fw-bold">{{ d.mac_address }}</td>
                     <td><span class="badge bg-secondary">{{ d.device_type.upper() }}</span></td>
-                    <td><span class="badge bg-success"><i class="fas fa-check me-1"></i>BYPASSED (No Popup Required)</span></td>
-                    <td class="small text-muted">{{ d.created_at.strftime('%Y-%m-%d') if d.created_at else '-' }}</td>
+                    <td><span class="badge bg-success">BYPASSED (No Popup Required)</span></td>
+                    <td class="small text-secondary">{{ d.created_at.strftime('%Y-%m-%d') if d.created_at else '-' }}</td>
+                    <td style="text-align: right;">
+                      <form action="/api/devices/{{ d.id }}/delete" method="POST" class="d-inline" onsubmit="return confirm('Remove device MAC bypass from router?');">
+                        <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2">Unbind</button>
+                      </form>
+                    </td>
                   </tr>
                   {% else %}
                   <tr>
-                    <td colspan="6" class="text-center text-muted py-4">
-                      <i class="fas fa-tv fs-2 text-secondary mb-2 d-block"></i>
-                      No devices bypassed yet. Click 'Bypass Android TV' to register an Android TV or Smart TV!
+                    <td colspan="7" class="text-center py-5 text-secondary">
+                      No devices bypassed yet. Click 'Bypass New Device' to register an Android TV or Smart TV!
                     </td>
                   </tr>
                   {% endfor %}
@@ -787,19 +829,19 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
         </div>
 
         <!-- ===================================================== -->
-        <!-- 6. COLLECTIONS & PAYMENTS                             -->
+        <!-- 4. COLLECTIONS & PAYMENTS                             -->
         <!-- ===================================================== -->
         <div id="section-collections" class="content-section d-none">
-          <div class="panel-card">
-            <div class="panel-header">
-              <h5 class="fw-bold mb-0">Collections & Payments ({{ payments|length }})</h5>
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <h6 class="mb-0 fw-bold text-white">Payment Collections & Receipts ({{ payments|length }})</h6>
             </div>
             <div class="table-responsive">
-              <table class="custom-table">
+              <table class="data-table">
                 <thead>
                   <tr>
                     <th>Receipt #</th>
-                    <th>Amount</th>
+                    <th>Amount Paid</th>
                     <th>Method</th>
                     <th>Subscriber</th>
                     <th>Notes</th>
@@ -809,16 +851,16 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
                 <tbody>
                   {% for p in payments %}
                   <tr>
-                    <td class="font-mono text-warning">{{ p.receipt_no }}</td>
+                    <td class="font-mono text-warning fw-bold">{{ p.receipt_no }}</td>
                     <td><strong class="text-success">{{ p.amount }} SAR</strong></td>
                     <td><span class="badge bg-secondary">{{ p.method.upper() }}</span></td>
                     <td class="font-mono">{{ p.subscriber.phone if p.subscriber else '-' }}</td>
                     <td>{{ p.notes or '-' }}</td>
-                    <td class="text-muted small">{{ p.payment_date.strftime('%Y-%m-%d %H:%M') if p.payment_date else '-' }}</td>
+                    <td class="text-secondary small">{{ p.payment_date.strftime('%Y-%m-%d %H:%M') if p.payment_date else '-' }}</td>
                   </tr>
                   {% else %}
                   <tr>
-                    <td colspan="6" class="text-center text-muted py-4">No payments recorded yet.</td>
+                    <td colspan="6" class="text-center py-5 text-secondary">No payments recorded yet.</td>
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -828,24 +870,21 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
         </div>
 
         <!-- ===================================================== -->
-        <!-- 7. PACKAGES                                           -->
+        <!-- 5. PACKAGES                                           -->
         <!-- ===================================================== -->
         <div id="section-packages" class="content-section d-none">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0">Internet Packages & Rate Limits</h5>
-          </div>
           <div class="row g-3">
             {% for p in packages %}
             <div class="col-md-3">
-              <div class="panel-card p-3 border-secondary">
-                <span class="badge {{ 'bg-primary' if p.type == 'pppoe' else 'bg-success' }} mb-2">{{ p.type.upper() }}</span>
+              <div class="card-panel p-3">
+                <span class="badge {{ 'bg-primary' if p.type == 'pppoe' else 'bg-success' }} mb-2 font-mono">{{ p.type.upper() }}</span>
                 <h5 class="fw-bold text-white">{{ p.name }}</h5>
-                <h2 class="text-primary fw-bold my-2">{{ p.price }} <small class="fs-6 text-muted">SAR</small></h2>
-                <ul class="list-unstyled small text-muted my-3 lh-lg">
-                  <li><i class="fas fa-check text-success me-2"></i>Speed: <strong>{{ p.rate_limit or 'Standard' }}</strong></li>
-                  <li><i class="fas fa-check text-success me-2"></i>Validity: <strong>{{ p.validity_days }} Days</strong></li>
-                  <li><i class="fas fa-check text-success me-2"></i>Router Profile: <code>{{ p.mikrotik_profile }}</code></li>
-                  <li><i class="fas fa-check text-success me-2"></i>Shared Devices: <strong>{{ p.shared_users }} Devices</strong></li>
+                <h2 class="text-primary fw-bold my-2">{{ p.price }} <small class="fs-6 text-secondary">SAR</small></h2>
+                <ul class="list-unstyled small text-secondary my-3 lh-lg">
+                  <li>✔ Speed: <strong class="text-white">{{ p.rate_limit or 'Standard' }}</strong></li>
+                  <li>✔ Validity: <strong class="text-white">{{ p.validity_days }} Days</strong></li>
+                  <li>✔ Router Profile: <code class="text-warning">{{ p.mikrotik_profile }}</code></li>
+                  <li>✔ Max Devices: <strong class="text-white">{{ p.shared_users }} Devices</strong></li>
                 </ul>
               </div>
             </div>
@@ -854,31 +893,43 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
         </div>
 
         <!-- ===================================================== -->
-        <!-- 8. ROUTER HARDWARE SETTINGS                           -->
+        <!-- 6. ROUTER HARDWARE & LIVE TELEMETRY                   -->
         <!-- ===================================================== -->
         <div id="section-mikrotik" class="content-section d-none">
-          <div class="panel-card">
-            <div class="panel-header">
-              <h5 class="fw-bold mb-0">MikroTik RouterOS Connection</h5>
-              <span class="badge bg-success"><span class="pulse-dot me-1"></span>Port 8728 Open</span>
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <h6 class="mb-0 fw-bold text-white">MikroTik RouterOS Telemetry & Hardware Connection</h6>
+              <span class="badge bg-success font-mono">Port 8728 API Connected</span>
             </div>
             <div class="p-4">
               <div class="row g-4">
                 <div class="col-md-6">
                   <div class="p-3 rounded-3 bg-dark border border-secondary border-opacity-25">
-                    <h6 class="fw-bold text-white mb-3">Active Router Status</h6>
+                    <h6 class="fw-bold text-white mb-3">Live Router Telemetry</h6>
                     <table class="table table-sm table-borderless text-secondary small">
                       <tr>
-                        <td class="text-secondary">Router IP:</td>
-                        <td class="font-mono text-white fw-bold">{{ router_host }}</td>
+                        <td>Hardware Model:</td>
+                        <td class="font-mono text-white fw-bold">{{ router_info.board_name or 'hAP lite' }}</td>
                       </tr>
                       <tr>
-                        <td class="text-secondary">API Port:</td>
-                        <td class="font-mono text-white">{{ router_port }}</td>
+                        <td>RouterOS Version:</td>
+                        <td class="font-mono text-white">{{ router_info.version or 'RouterOS' }}</td>
                       </tr>
                       <tr>
-                        <td class="text-secondary">Ping Response:</td>
-                        <td class="text-success fw-bold font-mono">{{ router_ping }}</td>
+                        <td>Uptime:</td>
+                        <td class="font-mono text-success fw-bold">{{ router_info.uptime or 'Online' }}</td>
+                      </tr>
+                      <tr>
+                        <td>CPU Load:</td>
+                        <td class="font-mono text-white">{{ router_info.cpu_load or 'Normal' }}</td>
+                      </tr>
+                      <tr>
+                        <td>Free Memory:</td>
+                        <td class="font-mono text-white">{{ router_info.free_memory or 'Normal' }}</td>
+                      </tr>
+                      <tr>
+                        <td>Ping Latency:</td>
+                        <td class="font-mono text-success fw-bold">{{ router_ping }}</td>
                       </tr>
                     </table>
                   </div>
@@ -889,7 +940,7 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
                     <h6 class="fw-bold text-white mb-3">Update Router Credentials</h6>
                     <form action="/api/router/update" method="POST">
                       <div class="mb-2">
-                        <label class="small text-secondary">Router IP</label>
+                        <label class="small text-secondary">Router Host / IP</label>
                         <input type="text" name="host" class="form-control form-control-sm bg-secondary bg-opacity-25 border-secondary text-white" value="{{ router_host }}" required>
                       </div>
                       <div class="mb-2">
@@ -902,9 +953,9 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
                       </div>
                       <div class="mb-3">
                         <label class="small text-secondary">RouterOS Password</label>
-                        <input type="password" name="password" class="form-control form-control-sm bg-secondary bg-opacity-25 border-secondary text-white" placeholder="Enter password to authenticate">
+                        <input type="password" name="password" class="form-control form-control-sm bg-secondary bg-opacity-25 border-secondary text-white" value="{{ router.password if router else '' }}" placeholder="Enter router password">
                       </div>
-                      <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fas fa-save me-1"></i>Save & Authenticate</button>
+                      <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">Save & Re-Authenticate</button>
                     </form>
                   </div>
                 </div>
@@ -917,13 +968,98 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
     </div>
   </div>
 
+  <!-- ===================================================== -->
+  <!-- MODAL: CUSTOMER DETAILS & MULTI-DEVICE DRAWER         -->
+  <!-- ===================================================== -->
+  <div class="modal fade" id="customerDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content bg-dark border-secondary">
+        <div class="modal-header border-secondary">
+          <div>
+            <h5 class="modal-title text-white fw-bold d-flex align-items-center gap-2">
+              <span id="custDetailPhone" class="font-mono text-warning">0597595059</span>
+              <span id="custDetailStatusBadge" class="badge bg-success">Active</span>
+            </h5>
+            <small class="text-secondary" id="custDetailName">Customer Name</small>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        
+        <div class="modal-body">
+          <!-- Summary Cards -->
+          <div class="row g-2 mb-4">
+            <div class="col-4">
+              <div class="p-2 rounded bg-secondary bg-opacity-10 border border-secondary border-opacity-25 text-center">
+                <small class="text-secondary d-block">Package</small>
+                <strong class="text-white" id="custDetailPkg">Hotspot 30D</strong>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="p-2 rounded bg-secondary bg-opacity-10 border border-secondary border-opacity-25 text-center">
+                <small class="text-secondary d-block">Expiry Date</small>
+                <strong class="text-warning font-mono" id="custDetailExp">2026-10-07</strong>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="p-2 rounded bg-secondary bg-opacity-10 border border-secondary border-opacity-25 text-center">
+                <small class="text-secondary d-block">Allowed Devices</small>
+                <strong class="text-info" id="custDetailQuota">1 / 5 Devices</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Connected Devices Section -->
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold text-white mb-0">Connected Devices & MAC Bypasses</h6>
+          </div>
+          <div class="table-responsive mb-4">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Device Name</th>
+                  <th>MAC Address</th>
+                  <th>Type</th>
+                  <th>Added At</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="custDetailDevicesBody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Form to Add Another Device (e.g. Android TV) for this Customer -->
+          <div class="p-3 rounded-3 bg-secondary bg-opacity-10 border border-secondary border-opacity-25 mb-3">
+            <h6 class="fw-bold text-warning mb-2">+ Add Another Device (Android TV / Phone)</h6>
+            <form id="formAddDeviceToCust" action="" method="POST" class="row g-2">
+              <div class="col-md-5">
+                <input type="text" name="device_name" class="form-control form-control-sm bg-dark border-secondary text-white" placeholder="Device Label (e.g. Living Room TV)" required>
+              </div>
+              <div class="col-md-4">
+                <input type="text" name="mac_address" class="form-control form-control-sm bg-dark border-secondary text-white font-mono" placeholder="MAC (AA:BB:CC:DD:EE:FF)" required>
+              </div>
+              <div class="col-md-3">
+                <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold text-dark">+ Bypass on Router</button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: APPROVE HOTSPOT REQUEST -->
   <div class="modal fade" id="modalApproveHotspot" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-dark border-secondary">
         <form id="formApproveHotspot" action="" method="POST">
           <div class="modal-header border-secondary">
-            <h5 class="modal-title text-white"><i class="fas fa-wifi text-success me-2"></i>Approve & Activate Customer</h5>
+            <h5 class="modal-title text-white fw-bold">Approve & Activate Customer</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
@@ -937,7 +1073,7 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
                 <span class="text-info font-mono small" id="approveModalMac">AA:BB:CC:DD:EE:FF</span>
               </div>
               <div class="d-flex justify-content-between mt-1">
-                <span class="text-secondary small">Device Type:</span>
+                <span class="text-secondary small">Device Model:</span>
                 <span class="text-white small" id="approveModalDevice">Apple iPhone</span>
               </div>
             </div>
@@ -985,7 +1121,7 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
           <div class="modal-footer border-secondary">
             <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" class="btn btn-success btn-sm fw-bold">
-              <i class="fas fa-check-circle me-1"></i> Activate & Grant Internet
+              Activate & Grant Internet
             </button>
           </div>
         </form>
@@ -999,7 +1135,7 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
       <div class="modal-content bg-dark border-secondary">
         <form action="/api/subscribers/add" method="POST">
           <div class="modal-header border-secondary">
-            <h5 class="modal-title text-white"><i class="fas fa-user-plus text-primary me-2"></i>Add Subscriber</h5>
+            <h5 class="modal-title text-white fw-bold">Add Subscriber</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
@@ -1007,7 +1143,7 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
               <label class="form-label text-secondary small fw-bold">Subscriber Type</label>
               <select name="type" class="form-select bg-secondary bg-opacity-25 border-secondary text-white">
                 <option value="hotspot" selected>Hotspot (WiFi Multi-Device)</option>
-                <option value="pppoe">PPPoE (Fiber / Broadband)</option>
+                <option value="pppoe">PPPoE (Broadband / Fiber)</option>
               </select>
             </div>
             <div class="mb-3">
@@ -1020,7 +1156,7 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
             </div>
             <div class="mb-3">
               <label class="form-label text-secondary small fw-bold">Full Name</label>
-              <input type="text" name="fullname" class="form-control bg-secondary bg-opacity-25 border-secondary text-white" placeholder="e.g. Real Test Customer" required>
+              <input type="text" name="fullname" class="form-control bg-secondary bg-opacity-25 border-secondary text-white" placeholder="Customer Name" required>
             </div>
             <div class="mb-3">
               <label class="form-label text-secondary small fw-bold">Phone Number</label>
@@ -1037,25 +1173,25 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
           </div>
           <div class="modal-footer border-secondary">
             <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-check-circle me-1"></i>Create & Provision on MikroTik</button>
+            <button type="submit" class="btn btn-primary btn-sm fw-bold">Create & Provision on Router</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: BYPASS ANDROID TV / MAC -->
+  <!-- MODAL: BYPASS ANDROID TV (DIRECT MAC) -->
   <div class="modal fade" id="bypassTvModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-dark border-secondary">
         <form action="/api/devices/bypass" method="POST">
           <div class="modal-header border-secondary">
-            <h5 class="modal-title text-white"><i class="fas fa-tv text-warning me-2"></i>Bypass Android TV / Device MAC</h5>
+            <h5 class="modal-title text-white fw-bold">Bypass Android TV / Device MAC</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
             <div class="mb-3">
-              <label class="form-label text-secondary small fw-bold">Customer Account (Mobile / Name)</label>
+              <label class="form-label text-secondary small fw-bold">Assign to Customer Account</label>
               <select name="subscriber_id" id="bypassSubscriberSelect" class="form-select bg-secondary bg-opacity-25 border-secondary text-white" required>
                 {% for s in subscribers %}
                 <option value="{{ s.id }}">{{ s.phone or s.username }} - {{ s.fullname }} ({{ s.type.upper() }})</option>
@@ -1065,28 +1201,18 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
               </select>
             </div>
             <div class="mb-3">
-              <label class="form-label text-secondary small fw-bold">Device Name</label>
-              <input type="text" name="device_name" class="form-control bg-secondary bg-opacity-25 border-secondary text-white" placeholder="e.g. Living Room Android TV" value="Android TV" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label text-secondary small fw-bold">Device Type</label>
-              <select name="device_type" class="form-select bg-secondary bg-opacity-25 border-secondary text-white">
-                <option value="tv" selected>Android TV / Smart TV</option>
-                <option value="console">PlayStation / Xbox / Console</option>
-                <option value="phone">Smartphone</option>
-                <option value="pc">Laptop / PC</option>
-                <option value="other">Other</option>
-              </select>
+              <label class="form-label text-secondary small fw-bold">Device Name / Label</label>
+              <input type="text" name="device_name" class="form-control bg-secondary bg-opacity-25 border-secondary text-white" placeholder="e.g. Living Room Sony TV" value="Living Room Android TV" required>
             </div>
             <div class="mb-3">
               <label class="form-label text-secondary small fw-bold">Device MAC Address</label>
               <input type="text" name="mac_address" class="form-control bg-secondary bg-opacity-25 border-secondary text-white font-mono" placeholder="e.g. A4:C1:38:12:34:56" required>
-              <small class="text-muted">Bypasses captive portal directly on MikroTik: <code>/ip hotspot ip-binding type=bypassed</code></small>
+              <small class="text-secondary">Added as <code>/ip hotspot ip-binding type=bypassed</code> on MikroTik.</small>
             </div>
           </div>
           <div class="modal-footer border-secondary">
             <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-warning btn-sm fw-bold"><i class="fas fa-tv me-1"></i>Bypass Device on MikroTik</button>
+            <button type="submit" class="btn btn-warning btn-sm fw-bold text-dark">Bypass Device on Router</button>
           </div>
         </form>
       </div>
@@ -1095,39 +1221,88 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    let activeCategory = 'all';
+
+    function setCategoryFilter(category) {
+      activeCategory = category;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById('btn-filter-' + category);
+      if (activeBtn) activeBtn.classList.add('active');
+      applyFilters();
+    }
+
+    function filterBy(type) {
+      if (type === 'hotspot') {
+        switchSection('dashboard');
+        setCategoryFilter('hotspot');
+      } else if (type === 'pppoe') {
+        switchSection('dashboard');
+        setCategoryFilter('pppoe');
+      } else if (type === 'devices') {
+        switchSection('devices');
+      } else if (type === 'collections') {
+        switchSection('collections');
+      } else if (type === 'pending') {
+        switchSection('hotspot-requests');
+      }
+    }
+
+    function applyFilters() {
+      const q = document.getElementById('filterSearch').value.toLowerCase().trim();
+      const rows = document.querySelectorAll('#subscribersTable tbody tr.sub-row');
+
+      rows.forEach(row => {
+        const type = row.getAttribute('data-type') || '';
+        const status = row.getAttribute('data-status') || '';
+        const searchData = (row.getAttribute('data-search') || '').toLowerCase();
+
+        let matchesCat = true;
+        if (activeCategory === 'hotspot') matchesCat = (type === 'hotspot');
+        else if (activeCategory === 'pppoe') matchesCat = (type === 'pppoe');
+        else if (activeCategory === 'active') matchesCat = (status === 'active');
+        else if (activeCategory === 'suspended') matchesCat = (status === 'suspended');
+
+        let matchesSearch = true;
+        if (q) {
+          matchesSearch = searchData.includes(q);
+        }
+
+        if (matchesCat && matchesSearch) {
+          row.classList.remove('d-none');
+        } else {
+          row.classList.add('d-none');
+        }
+      });
+    }
+
     function switchSection(secId) {
       document.querySelectorAll('.content-section').forEach(el => el.classList.add('d-none'));
-      document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
 
       const target = document.getElementById('section-' + secId);
       if (target) {
         target.classList.remove('d-none');
       }
 
-      // Set active sidebar
-      const links = document.querySelectorAll('.sidebar-link');
-      links.forEach(l => {
-        if (l.getAttribute('onclick') && l.getAttribute('onclick').includes(secId)) {
-          l.classList.add('active');
-        }
-      });
+      const nav = document.getElementById('nav-' + secId);
+      if (nav) {
+        nav.classList.add('active');
+      }
 
-      // Update Header Title
       const titles = {
-        'dashboard': 'ISP Operations Center',
-        'hotspot-requests': 'Hotspot Phone Submissions (Live)',
+        'dashboard': 'Operations Board',
+        'hotspot-requests': 'Hotspot Mobile Requests (Live)',
         'hotspot': 'Hotspot Subscriber Accounts',
-        'pppoe': 'PPPoE Fiber / Broadband Accounts',
-        'devices': 'Android TV & Bypassed Devices',
-        'collections': 'Billing & Payments',
-        'packages': 'Internet Packages & Rate Limits',
-        'mikrotik': 'MikroTik RouterOS Settings'
+        'pppoe': 'PPPoE Broadband Accounts',
+        'devices': 'Android TV & Bypassed MACs',
+        'collections': 'Payments & Billing History',
+        'packages': 'Bandwidth Packages',
+        'mikrotik': 'RouterOS Telemetry & Settings'
       };
       if (titles[secId]) {
         document.getElementById('pageTitle').textContent = titles[secId];
       }
 
-      // Close mobile sidebar if open
       const sb = document.getElementById('appSidebar');
       if (sb.classList.contains('show')) {
         sb.classList.remove('show');
@@ -1161,13 +1336,57 @@ add dst-address=10.20.30.40 comment="CyberNet Billing Server"</pre>
       }
     }
 
-    function openAddDeviceForSub(subId, label) {
+    function openAddDeviceModal(subId, label) {
       var sel = document.getElementById('bypassSubscriberSelect');
-      if (sel) {
-        sel.value = subId;
-      }
+      if (sel) sel.value = subId;
       var modal = new bootstrap.Modal(document.getElementById('bypassTvModal'));
       modal.show();
+    }
+
+    function openCustomerDetails(subId) {
+      fetch('/api/subscribers/' + subId + '/details')
+        .then(r => r.json())
+        .then(sub => {
+          document.getElementById('custDetailPhone').textContent = sub.phone || sub.username;
+          document.getElementById('custDetailName').textContent = sub.fullname;
+          document.getElementById('custDetailPkg').textContent = sub.package_name;
+          document.getElementById('custDetailExp').textContent = sub.expiry_date;
+          document.getElementById('custDetailQuota').textContent = sub.devices.length + ' / ' + sub.shared_users + ' Devices';
+          
+          const badge = document.getElementById('custDetailStatusBadge');
+          badge.textContent = sub.status.toUpperCase();
+          badge.className = 'badge ' + (sub.status === 'active' ? 'bg-success' : 'bg-danger');
+
+          document.getElementById('formAddDeviceToCust').action = '/api/subscribers/' + sub.id + '/devices/add';
+
+          const tbody = document.getElementById('custDetailDevicesBody');
+          tbody.innerHTML = '';
+          if (sub.devices && sub.devices.length > 0) {
+            sub.devices.forEach(d => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td><strong>${d.name}</strong></td>
+                <td class="font-mono text-info fw-bold">${d.mac}</td>
+                <td><span class="badge bg-secondary">${d.type.toUpperCase()}</span></td>
+                <td class="small text-secondary">${d.created_at}</td>
+                <td style="text-align: right;">
+                  <form action="/api/devices/${d.id}/delete" method="POST" class="d-inline" onsubmit="return confirm('Remove device MAC from router?');">
+                    <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2">Unbind</button>
+                  </form>
+                </td>
+              `;
+              tbody.appendChild(tr);
+            });
+          } else {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-secondary">No devices registered under this customer yet.</td></tr>';
+          }
+
+          var modal = new bootstrap.Modal(document.getElementById('customerDetailsModal'));
+          modal.show();
+        })
+        .catch(err => {
+          alert('Could not load customer details: ' + err);
+        });
     }
   </script>
 </body>

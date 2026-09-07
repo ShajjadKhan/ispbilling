@@ -3,9 +3,9 @@ import re
 import subprocess
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
-from fastapi import FastAPI, Request, Depends, Form, HTTPException, Body
+from fastapi import FastAPI, Request, Depends, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, Response, JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -23,7 +23,7 @@ init_db()
 
 app = FastAPI(title="CyberNet ISP Billing - Standalone MikroTik System")
 
-# Enable CORS so MikroTik captive portal can make cross-origin AJAX requests
+# Enable CORS for captive portal AJAX
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,7 +39,7 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 def parse_device_name(user_agent: Optional[str]) -> str:
     """Extracts human-readable device model from browser User-Agent."""
     if not user_agent:
-        return "Mobile Device"
+        return "Mobile Phone"
     ua = user_agent.lower()
     if "iphone" in ua:
         return "Apple iPhone"
@@ -118,7 +118,6 @@ def get_router_service(db: Session) -> Optional[MikrotikService]:
 # =========================================================================
 @app.get("/")
 def dashboard_view(request: Request, db: Session = Depends(get_db)):
-    # 1. Real Counts from cybernet.db
     total_subscribers = db.query(Subscriber).count()
     active_subscribers = db.query(Subscriber).filter(Subscriber.status == "active").count()
     pppoe_subscribers = db.query(Subscriber).filter(Subscriber.type == "pppoe").count()
@@ -136,34 +135,53 @@ def dashboard_view(request: Request, db: Session = Depends(get_db)):
     recent_hotspot_requests = (
         db.query(HotspotRequest)
         .order_by(HotspotRequest.created_at.desc())
-        .limit(15)
+        .limit(20)
         .all()
     )
 
-    # 2. Real Revenue (sum of all verified payments recorded this month)
+    # Real Revenue
     first_of_month = date.today().replace(day=1)
     first_of_month_dt = datetime.combine(first_of_month, datetime.min.time())
     month_payments = db.query(Payment).filter(Payment.payment_date >= first_of_month_dt).all()
     month_revenue = sum(p.amount for p in month_payments) if month_payments else 0.0
 
-    # 3. Real Records
+    # Real Records
     subscribers = db.query(Subscriber).order_by(Subscriber.id.desc()).all()
-    payments = db.query(Payment).order_by(Payment.id.desc()).limit(10).all()
+    payments = db.query(Payment).order_by(Payment.id.desc()).limit(15).all()
     devices = db.query(SubscriberDevice).order_by(SubscriberDevice.id.desc()).all()
     packages = db.query(Package).filter(Package.is_active == True).all()
     router = db.query(Router).first()
-    audit_logs = db.query(AuditLog).order_by(AuditLog.id.desc()).limit(10).all()
+    audit_logs = db.query(AuditLog).order_by(AuditLog.id.desc()).limit(15).all()
 
-    # 4. Real Ping & Socket Verification to MikroTik
+    # Real Router Connection & Hardware Telemetry
     router_host = router.host if router else "10.20.30.1"
     router_port = router.port if router else 8728
     ping_ms = measure_ping(router_host)
+
+    router_info = {}
+    mt = get_router_service(db)
+    if mt:
+        try:
+            conn = mt._get_api()
+            res = conn.get_resource("/system/resource").get()
+            if res:
+                r0 = res[0]
+                router_info = {
+                    "board_name": r0.get("board-name", "RouterBOARD"),
+                    "version": r0.get("version", "RouterOS"),
+                    "uptime": r0.get("uptime", "Unknown"),
+                    "cpu_load": f"{r0.get('cpu-load', '0')}%",
+                    "free_memory": f"{int(r0.get('free-memory', 0)) // 1048576} MB",
+                    "connected": True
+                }
+            mt.close()
+        except Exception as e:
+            router_info = {"connected": False, "error": str(e)}
 
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html",
         context={
-            "request": request,
             "total_subscribers": total_subscribers,
             "active_subscribers": active_subscribers,
             "pppoe_subscribers": pppoe_subscribers,
@@ -176,6 +194,7 @@ def dashboard_view(request: Request, db: Session = Depends(get_db)):
             "devices": devices,
             "packages": packages,
             "router": router,
+            "router_info": router_info,
             "audit_logs": audit_logs,
             "router_host": router_host,
             "router_port": router_port,
@@ -187,7 +206,7 @@ def dashboard_view(request: Request, db: Session = Depends(get_db)):
 
 
 # =========================================================================
-# MIKROTIK CAPTIVE PORTAL ENDPOINTS
+# MIKROTIK CAPTIVE PORTAL SUBMISSIONS
 # =========================================================================
 @app.post("/api/hotspot/submit")
 async def submit_hotspot_phone(
@@ -195,8 +214,7 @@ async def submit_hotspot_phone(
     db: Session = Depends(get_db)
 ):
     """
-    Called when a customer enters their mobile number on the MikroTik Hotspot popup.
-    Supports both JSON and Form-data payloads.
+    Called when customer enters phone number on MikroTik captive portal popup.
     """
     content_type = request.headers.get("content-type", "")
     phone_raw = ""
@@ -218,10 +236,10 @@ async def submit_hotspot_phone(
         device_model = str(form.get("device_model", ""))
 
     clean_phone = normalize_phone(phone_raw)
-    clean_mac = normalize_mac(mac_raw) if mac_raw else ""
+    clean_mac = normalize_mac(mac_raw) if (mac_raw and mac_raw != "AUTO_DETECTED") else ""
     ip_addr = ip_raw.strip() or (request.client.host if request.client else "")
 
-    if not device_model or len(device_model) < 3:
+    if not device_model or len(device_model) < 3 or "mozilla" in device_model.lower():
         device_model = parse_device_name(request.headers.get("user-agent"))
 
     if not clean_phone or len(clean_phone) < 9:
@@ -230,7 +248,7 @@ async def submit_hotspot_phone(
             content={"status": "error", "message": "Please enter a valid phone number (at least 9 digits)."}
         )
 
-    # 1. Check if an existing subscriber exists with this phone number
+    # 1. Check if subscriber exists
     sub = (
         db.query(Subscriber)
         .filter((Subscriber.phone == clean_phone) | (Subscriber.username == clean_phone))
@@ -240,13 +258,11 @@ async def submit_hotspot_phone(
     today = date.today()
 
     if sub:
-        # Case A: Active Subscriber with valid expiry
+        # Case A: Active Subscriber
         if sub.status == "active" and sub.expiry_date and sub.expiry_date >= today:
-            # Check if this MAC is already among their registered devices
             existing_device = next((d for d in sub.devices if d.mac_address == clean_mac), None) if clean_mac else None
 
             if existing_device:
-                # Device is already registered and active
                 return JSONResponse({
                     "status": "approved",
                     "message": f"Welcome back, {sub.fullname or clean_phone}! Internet access is active.",
@@ -254,12 +270,10 @@ async def submit_hotspot_phone(
                     "phone": clean_phone
                 })
 
-            # Check device limit for this subscriber's package
             device_limit = sub.package.shared_users if (sub.package and sub.package.shared_users) else 5
             current_device_count = len(sub.devices)
 
             if current_device_count < device_limit:
-                # Add this new device automatically under customer's phone account
                 if clean_mac:
                     new_dev = SubscriberDevice(
                         subscriber_id=sub.id,
@@ -273,7 +287,6 @@ async def submit_hotspot_phone(
                     db.add(new_dev)
                     db.commit()
 
-                    # Provision MAC on MikroTik IP-binding as bypassed
                     mt = get_router_service(db)
                     if mt:
                         try:
@@ -283,7 +296,7 @@ async def submit_hotspot_phone(
                                 comment=f"Hotspot: {clean_phone} ({device_model})"
                             )
                             mt.close()
-                        except Exception as e:
+                        except Exception:
                             pass
 
                 return JSONResponse({
@@ -295,11 +308,10 @@ async def submit_hotspot_phone(
             else:
                 return JSONResponse({
                     "status": "device_limit",
-                    "message": f"Device limit reached ({current_device_count}/{device_limit} devices). Please contact admin.",
+                    "message": f"Device limit reached ({current_device_count}/{device_limit} devices). Contact admin.",
                     "phone": clean_phone
                 })
 
-        # Case B: Subscriber exists but expired or suspended
         elif sub.status == "suspended":
             return JSONResponse({
                 "status": "suspended",
@@ -307,14 +319,13 @@ async def submit_hotspot_phone(
                 "phone": clean_phone
             })
         else:
-            # Expired
             return JSONResponse({
                 "status": "expired",
                 "message": f"Your package expired on {sub.expiry_date}. Please renew to regain internet access.",
                 "phone": clean_phone
             })
 
-    # 2. Case C: Brand New Customer -> Create/Update HotspotRequest (Waiting for Admin Activation)
+    # Case B: Brand New Customer -> Create HotspotRequest
     existing_req = None
     if clean_mac:
         existing_req = db.query(HotspotRequest).filter(
@@ -330,7 +341,7 @@ async def submit_hotspot_phone(
     else:
         new_req = HotspotRequest(
             phone=clean_phone,
-            mac_address=clean_mac or "UNKNOWN",
+            mac_address=clean_mac or f"SUB-{clean_phone[-6:]}",
             ip_address=ip_addr,
             device_model=device_model,
             status="pending"
@@ -352,13 +363,9 @@ def check_hotspot_status(
     phone: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
-    """
-    Called by captive portal poller every 5 seconds to check if request was approved.
-    """
-    clean_mac = normalize_mac(mac) if mac else None
+    clean_mac = normalize_mac(mac) if (mac and mac != "AUTO_DETECTED") else None
     clean_phone = normalize_phone(phone) if phone else None
 
-    # Check 1: Is this MAC active on a subscriber?
     if clean_mac:
         device = db.query(SubscriberDevice).filter(
             SubscriberDevice.mac_address == clean_mac,
@@ -374,7 +381,6 @@ def check_hotspot_status(
                     "expiry": str(device.subscriber.expiry_date)
                 })
 
-    # Check 2: Check HotspotRequest status
     req = None
     if clean_mac:
         req = db.query(HotspotRequest).filter(HotspotRequest.mac_address == clean_mac).order_by(HotspotRequest.id.desc()).first()
@@ -407,10 +413,6 @@ def approve_hotspot_request(
     payment_method: str = Form("cash"),
     db: Session = Depends(get_db)
 ):
-    """
-    Admin 1-click action: Approves customer request submitted from captive portal.
-    Creates or updates subscriber, adds device MAC bypass, records payment, and provisions RouterOS.
-    """
     req = db.query(HotspotRequest).filter(HotspotRequest.id == req_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Request not found")
@@ -421,11 +423,9 @@ def approve_hotspot_request(
     today = date.today()
     exp_date = today + timedelta(days=validity_days)
 
-    # Check if subscriber with this phone already exists
     sub = db.query(Subscriber).filter(Subscriber.phone == req.phone).first()
 
     if not sub:
-        # Create brand new subscriber
         sub_name = fullname.strip() if fullname.strip() else f"User {req.phone}"
         sub = Subscriber(
             router_id=router.id if router else None,
@@ -444,7 +444,6 @@ def approve_hotspot_request(
         db.add(sub)
         db.flush()
     else:
-        # Renew / extend existing subscriber
         base_date = max(sub.expiry_date, today) if sub.expiry_date else today
         exp_date = base_date + timedelta(days=validity_days)
         sub.expiry_date = exp_date
@@ -454,8 +453,8 @@ def approve_hotspot_request(
         if package:
             sub.package_id = package.id
 
-    # Register the requesting MAC device under this subscriber
-    if req.mac_address and req.mac_address != "UNKNOWN":
+    # Register MAC
+    if req.mac_address and not req.mac_address.startswith("SUB-"):
         dev = db.query(SubscriberDevice).filter(SubscriberDevice.mac_address == req.mac_address).first()
         if not dev:
             dev = SubscriberDevice(
@@ -484,29 +483,26 @@ def approve_hotspot_request(
     )
     db.add(pay)
 
-    # Mark request approved
     req.status = "approved"
     req.subscriber_id = sub.id
     req.updated_at = datetime.utcnow()
 
-    # Audit log
     audit = AuditLog(
         action="APPROVE_HOTSPOT",
-        details=f"Approved Hotspot connection for {req.phone} ({sub.fullname}). Paid {amount_paid} SAR. MAC {req.mac_address} bypassed until {exp_date}."
+        details=f"Approved Hotspot connection for {req.phone} ({sub.fullname}). Paid {amount_paid} SAR."
     )
     db.add(audit)
     db.commit()
 
-    # Provision MAC bypass on MikroTik Router
+    # Provision on MikroTik Router
     mt = get_router_service(db)
-    if mt and req.mac_address and req.mac_address != "UNKNOWN":
+    if mt and req.mac_address and not req.mac_address.startswith("SUB-"):
         try:
             mt.add_ip_binding(
                 mac_address=req.mac_address,
                 binding_type="bypassed",
                 comment=f"Hotspot: {req.phone} ({sub.fullname})"
             )
-            # Also ensure hotspot user secret exists
             profile_name = package.mikrotik_profile if package else "hotspot-monthly"
             mt.add_hotspot_user(
                 name=req.phone,
@@ -528,7 +524,6 @@ def reject_hotspot_request(
     reason: str = Form("Request declined by administrator"),
     db: Session = Depends(get_db)
 ):
-    """Admin rejects pending connection request."""
     req = db.query(HotspotRequest).filter(HotspotRequest.id == req_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Request not found")
@@ -539,7 +534,7 @@ def reject_hotspot_request(
 
     audit = AuditLog(
         action="REJECT_HOTSPOT",
-        details=f"Rejected Hotspot connection for {req.phone} (MAC: {req.mac_address}). Reason: {reason}"
+        details=f"Rejected Hotspot request for {req.phone} (MAC: {req.mac_address}). Reason: {reason}"
     )
     db.add(audit)
     db.commit()
@@ -568,7 +563,210 @@ def download_hotspot_login():
 
 
 # =========================================================================
-# MANUAL SUBSCRIBER PROVISIONING (PPPoE / Hotspot)
+# SUBSCRIBER DETAILS & MULTI-DEVICE MANAGEMENT
+# =========================================================================
+@app.get("/api/subscribers/{sub_id}/details")
+def get_subscriber_details(sub_id: int, db: Session = Depends(get_db)):
+    """Returns complete subscriber profile, connected devices, and payment records."""
+    sub = db.query(Subscriber).filter(Subscriber.id == sub_id).first()
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscriber not found")
+
+    dev_list = []
+    for d in sub.devices:
+        dev_list.append({
+            "id": d.id,
+            "name": d.device_name,
+            "mac": d.mac_address,
+            "type": d.device_type,
+            "is_bypassed": d.is_bypassed,
+            "created_at": d.created_at.strftime("%Y-%m-%d %H:%M") if d.created_at else "-"
+        })
+
+    pay_list = []
+    for p in sub.payments:
+        pay_list.append({
+            "receipt_no": p.receipt_no,
+            "amount": p.amount,
+            "method": p.method.upper(),
+            "date": p.payment_date.strftime("%Y-%m-%d %H:%M") if p.payment_date else "-"
+        })
+
+    return JSONResponse({
+        "id": sub.id,
+        "username": sub.username,
+        "fullname": sub.fullname,
+        "phone": sub.phone,
+        "type": sub.type.upper(),
+        "status": sub.status,
+        "expiry_date": str(sub.expiry_date) if sub.expiry_date else "No Expiry",
+        "monthly_fee": sub.monthly_fee,
+        "package_name": sub.package.name if sub.package else "Standard Package",
+        "package_speed": sub.package.rate_limit if sub.package else "Default",
+        "shared_users": sub.package.shared_users if sub.package else 5,
+        "devices": dev_list,
+        "payments": pay_list
+    })
+
+
+@app.post("/api/subscribers/{sub_id}/devices/add")
+def add_device_for_subscriber(
+    sub_id: int,
+    device_name: str = Form(...),
+    mac_address: str = Form(...),
+    device_type: str = Form("tv"),
+    db: Session = Depends(get_db)
+):
+    """
+    Adds a device (e.g. Android TV, secondary phone) directly to a subscriber account
+    and immediately provisions MAC bypass on MikroTik.
+    """
+    sub = db.query(Subscriber).filter(Subscriber.id == sub_id).first()
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscriber not found")
+
+    clean_mac = normalize_mac(mac_address)
+    dev = db.query(SubscriberDevice).filter(SubscriberDevice.mac_address == clean_mac).first()
+
+    if not dev:
+        dev = SubscriberDevice(
+            subscriber_id=sub.id,
+            device_name=device_name.strip(),
+            mac_address=clean_mac,
+            device_type=device_type,
+            is_bypassed=True,
+            is_active=True
+        )
+        db.add(dev)
+    else:
+        dev.subscriber_id = sub.id
+        dev.device_name = device_name.strip()
+        dev.device_type = device_type
+        dev.is_bypassed = True
+        dev.is_active = True
+
+    audit = AuditLog(
+        action="ADD_DEVICE",
+        details=f"Added {device_type.upper()} '{device_name}' (MAC: {clean_mac}) to customer {sub.phone}"
+    )
+    db.add(audit)
+    db.commit()
+
+    mt = get_router_service(db)
+    if mt:
+        try:
+            mt.add_ip_binding(
+                mac_address=clean_mac,
+                binding_type="bypassed",
+                comment=f"Customer: {sub.phone} ({device_name})"
+            )
+            mt.close()
+        except Exception:
+            pass
+
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/api/devices/{device_id}/delete")
+def delete_device(device_id: int, db: Session = Depends(get_db)):
+    """Removes a device from customer and unbinds from MikroTik router."""
+    dev = db.query(SubscriberDevice).filter(SubscriberDevice.id == device_id).first()
+    if not dev:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    mac = dev.mac_address
+    sub_name = dev.subscriber.phone if dev.subscriber else "Unknown"
+
+    db.delete(dev)
+    db.add(AuditLog(action="REMOVE_DEVICE", details=f"Removed MAC {mac} from customer {sub_name}"))
+    db.commit()
+
+    mt = get_router_service(db)
+    if mt:
+        try:
+            mt.delete_ip_binding(mac)
+            mt.close()
+        except Exception:
+            pass
+
+    return RedirectResponse(url="/", status_code=303)
+
+
+# =========================================================================
+# 2-WAY ROUTER SYNCHRONIZATION
+# =========================================================================
+@app.post("/api/router/sync")
+def sync_with_mikrotik(db: Session = Depends(get_db)):
+    """
+    Syncs live bindings from MikroTik router into cybernet.db.
+    Imports any existing bypassed devices (like 'my pc') so they appear on dashboard.
+    """
+    mt = get_router_service(db)
+    if not mt:
+        raise HTTPException(status_code=400, detail="MikroTik Router not configured")
+
+    try:
+        api = mt._get_api()
+        bindings = api.get_resource("/ip/hotspot/ip-binding").get()
+
+        # Find or create a default subscriber for system router devices if needed
+        default_sub = db.query(Subscriber).filter(Subscriber.username == "router-devices").first()
+        if not default_sub:
+            default_sub = Subscriber(
+                username="router-devices",
+                password="nopassword",
+                fullname="Router Existing Devices",
+                phone="0000000000",
+                type="hotspot",
+                status="active",
+                expiry_date=date(2030, 1, 1),
+                monthly_fee=0.0
+            )
+            db.add(default_sub)
+            db.flush()
+
+        imported_count = 0
+        for b in bindings:
+            raw_mac = b.get("mac-address")
+            if not raw_mac:
+                continue
+            clean_mac = normalize_mac(raw_mac)
+            comment = b.get("comment", "")
+            is_bypassed = (b.get("type") == "bypassed")
+
+            # Check if MAC already in DB
+            exists = db.query(SubscriberDevice).filter(SubscriberDevice.mac_address == clean_mac).first()
+            if not exists:
+                device_name = comment if comment else f"Device {clean_mac[-5:]}"
+                # Detect if comment has phone
+                linked_sub_id = default_sub.id
+                for sub in db.query(Subscriber).all():
+                    if sub.phone in comment or sub.username in comment:
+                        linked_sub_id = sub.id
+                        break
+
+                new_d = SubscriberDevice(
+                    subscriber_id=linked_sub_id,
+                    device_name=device_name,
+                    mac_address=clean_mac,
+                    device_type="tv" if ("tv" in comment.lower()) else "other",
+                    is_bypassed=is_bypassed,
+                    is_active=True
+                )
+                db.add(new_d)
+                imported_count += 1
+
+        db.add(AuditLog(action="ROUTER_SYNC", details=f"Synchronized router. Imported {imported_count} bindings."))
+        db.commit()
+        mt.close()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Router sync error: {e}")
+
+    return RedirectResponse(url="/", status_code=303)
+
+
+# =========================================================================
+# MANUAL SUBSCRIBER PROVISIONING & ACTIONS
 # =========================================================================
 @app.post("/api/subscribers/add")
 def add_subscriber(
@@ -633,9 +831,6 @@ def add_subscriber(
     return RedirectResponse(url="/", status_code=303)
 
 
-# =========================================================================
-# BYPASS ANDROID TV / NON-BROWSER DEVICE (MAC BINDING)
-# =========================================================================
 @app.post("/api/devices/bypass")
 def bypass_device(
     subscriber_id: int = Form(...),
@@ -644,10 +839,6 @@ def bypass_device(
     device_type: str = Form("tv"),
     db: Session = Depends(get_db)
 ):
-    """
-    Solves the Android TV / Game Console problem:
-    Bypasses the captive portal for devices that lack web browsers.
-    """
     clean_mac = normalize_mac(mac_address)
     sub = db.query(Subscriber).filter(Subscriber.id == subscriber_id).first()
     if not sub:
@@ -673,12 +864,11 @@ def bypass_device(
 
     audit = AuditLog(
         action="BYPASS_DEVICE",
-        details=f"Bypassed {device_type.upper()} '{device_name}' (MAC: {clean_mac}) for customer {sub.phone} ({sub.fullname})"
+        details=f"Bypassed {device_type.upper()} '{device_name}' (MAC: {clean_mac}) for customer {sub.phone}"
     )
     db.add(audit)
     db.commit()
 
-    # Apply to MikroTik IP-binding as bypassed
     mt = get_router_service(db)
     if mt:
         try:
@@ -688,16 +878,12 @@ def bypass_device(
                 comment=f"Customer: {sub.phone} ({device_name})"
             )
             mt.close()
-        except Exception as e:
-            db.add(AuditLog(action="ROUTER_SYNC_WARN", details=f"Could not add IP-binding on router: {e}"))
-            db.commit()
+        except Exception:
+            pass
 
     return RedirectResponse(url="/", status_code=303)
 
 
-# =========================================================================
-# LIFECYCLE: RENEW / SUSPEND / RESUME / UPDATE ROUTER
-# =========================================================================
 @app.post("/api/subscribers/{sub_id}/renew")
 def renew_subscriber_endpoint(
     sub_id: int,
