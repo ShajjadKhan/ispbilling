@@ -58,6 +58,7 @@ class Package(Base):
     validity_days = Column(Integer, default=30)
     mikrotik_profile = Column(String(100), nullable=False)  # Profile name on RouterOS
     rate_limit = Column(String(50), nullable=True)          # e.g., '10M/20M'
+    shared_users = Column(Integer, default=1)               # Max concurrent devices allowed on Hotspot
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -104,6 +105,28 @@ class Subscriber(Base):
     invoices = relationship("Invoice", back_populates="subscriber", cascade="all, delete-orphan")
     payments = relationship("Payment", back_populates="subscriber", cascade="all, delete-orphan")
     vacation_holds = relationship("VacationHold", back_populates="subscriber", cascade="all, delete-orphan")
+    devices = relationship("SubscriberDevice", back_populates="subscriber", cascade="all, delete-orphan")
+
+
+class SubscriberDevice(Base):
+    """Connected devices for a subscriber (e.g. Android TV, Gaming Console, Phones).
+    Supports MAC address bypass (ip-binding) in MikroTik Hotspot.
+    """
+    __tablename__ = "subscriber_devices"
+
+    id = Column(Integer, primary_key=True, index=True)
+    subscriber_id = Column(Integer, ForeignKey("subscribers.id"), nullable=False)
+    device_name = Column(String(100), nullable=False)  # e.g., "Living Room Android TV"
+    mac_address = Column(String(32), index=True, nullable=False)  # e.g., "AA:BB:CC:DD:EE:FF"
+    device_type = Column(String(32), default="tv")  # tv, phone, pc, console, other
+    ip_address = Column(String(45), nullable=True)
+    is_bypassed = Column(Boolean, default=True)  # True = bypass captive portal via ip-binding
+    is_active = Column(Boolean, default=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    subscriber = relationship("Subscriber", back_populates="devices")
 
 
 class Invoice(Base):

@@ -1,8 +1,8 @@
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker
 import hashlib
 from app.core.config import settings
-from app.models.models import Base, User, Router, Package
+from app.models.models import Base, User, Router, Package, SubscriberDevice
 
 # SQLite connect arguments
 connect_args = {"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {}
@@ -37,8 +37,19 @@ def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
 def init_db():
-    """Initializes tables and seeds initial administrator, packages, and router if empty."""
+    """Initializes tables, migrates missing columns, and seeds initial administrator, packages, and router if empty."""
     Base.metadata.create_all(bind=engine)
+
+    # Automatic migration for missing columns in SQLite
+    if "sqlite" in settings.DATABASE_URL:
+        with engine.connect() as conn:
+            # Check packages table
+            res = conn.execute(text("PRAGMA table_info(packages)"))
+            cols = [row[1] for row in res.fetchall()]
+            if "shared_users" not in cols:
+                conn.execute(text("ALTER TABLE packages ADD COLUMN shared_users INTEGER DEFAULT 1"))
+                conn.commit()
+
     db = SessionLocal()
     try:
         # Seed default master admin if no user exists
@@ -56,10 +67,10 @@ def init_db():
         # Seed default packages if none exist
         if not db.query(Package).first():
             sample_packages = [
-                Package(name="PPPoE Standard 10M", type="pppoe", price=30.0, validity_days=30, mikrotik_profile="10M", rate_limit="10M/10M", description="Standard 10Mbps home connection"),
-                Package(name="PPPoE Ultra 20M", type="pppoe", price=50.0, validity_days=30, mikrotik_profile="20M", rate_limit="20M/20M", description="High speed 20Mbps connection"),
-                Package(name="Hotspot Monthly 30 Days", type="hotspot", price=30.0, validity_days=30, mikrotik_profile="hotspot-monthly", rate_limit="5M/5M", description="WiFi Hotspot 30 days unlimited"),
-                Package(name="Hotspot Weekly 7 Days", type="hotspot", price=10.0, validity_days=7, mikrotik_profile="hotspot-weekly", rate_limit="5M/5M", description="WiFi Hotspot 7 days pass"),
+                Package(name="PPPoE Standard 10M", type="pppoe", price=30.0, validity_days=30, mikrotik_profile="10M", rate_limit="10M/10M", shared_users=1, description="Standard 10Mbps home connection"),
+                Package(name="PPPoE Ultra 20M", type="pppoe", price=50.0, validity_days=30, mikrotik_profile="20M", rate_limit="20M/20M", shared_users=1, description="High speed 20Mbps connection"),
+                Package(name="Hotspot Monthly 30 Days", type="hotspot", price=30.0, validity_days=30, mikrotik_profile="hotspot-monthly", rate_limit="5M/5M", shared_users=5, description="WiFi Hotspot 30 days unlimited (up to 5 devices)"),
+                Package(name="Hotspot Weekly 7 Days", type="hotspot", price=10.0, validity_days=7, mikrotik_profile="hotspot-weekly", rate_limit="5M/5M", shared_users=3, description="WiFi Hotspot 7 days pass (up to 3 devices)"),
             ]
             db.add_all(sample_packages)
 
